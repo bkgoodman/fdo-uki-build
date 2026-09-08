@@ -140,9 +140,9 @@ if [ -x /usr/local/bin/fdo-endpoint ]; then
     # Create payload temp dir
     mkdir -p /tmp/fdo_payloads
 
-    # Run TO2 directly against server (skip RV)
+    # Run TO1 → TO2 (proper FDO flow)
     cd /etc/fdo
-    /usr/local/bin/fdo-endpoint -to2 http://10.0.2.2:8080 -config /etc/fdo/config_generic.yaml 2>&1
+    /usr/local/bin/fdo-endpoint -config /etc/fdo/config_generic.yaml 2>&1
     FDO_EXIT=$?
 
     echo ""
@@ -241,7 +241,7 @@ echo "=== Step 7: Building UKI with ukify (on pe2) ==="
 # Copy kernel to pe2
 scp "$BUILD_DIR/vmlinuz" "$REMOTE_HOST:/tmp/fdo-uki-build-temp/vmlinuz"
 # Run ukify on pe2 (initrd already there from pe2)
-ssh "$REMOTE_HOST" "ukify build --linux /tmp/fdo-uki-build-temp/vmlinuz --initrd $REMOTE_INITRD --cmdline 'console=tty0 console=ttyS0' --output /tmp/fdo-uki-build-temp/ubuntu-installer-fdo.efi"
+ssh "$REMOTE_HOST" "ukify build --linux /tmp/fdo-uki-build-temp/vmlinuz --initrd $REMOTE_INITRD --cmdline 'console=ttyS0,tty0' --output /tmp/fdo-uki-build-temp/ubuntu-installer-fdo.efi"
 # Copy UKI back
 scp "$REMOTE_HOST:/tmp/fdo-uki-build-temp/ubuntu-installer-fdo.efi" "$UKI_OUTPUT"
 echo "  Built: $UKI_OUTPUT"
