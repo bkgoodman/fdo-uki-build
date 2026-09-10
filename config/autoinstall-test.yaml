@@ -1,0 +1,21 @@
+#cloud-config
+autoinstall:
+  version: 1
+  refresh-installer:
+    update: false
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+  identity:
+    hostname: fdo-installed
+    username: ubuntu
+    password: "$6$fdo-test$nJUkpBk7NhnmaPVXiAhlsrMvUdYPzqFE6vgjdf1LaN6bD2kaximuowWOLzJSn7mZXizGNlORpw3ct/w4yrTOj."
+  ssh:
+    install-server: true
+    allow-pw: true
+  storage:
+    layout:
+      name: direct
+  late-commands:
+    - curtin in-target --target=/target -- sh -c 'echo FDO_AUTOINSTALL_COMPLETE > /var/lib/fdo-autoinstall-complete'
+  shutdown: poweroff

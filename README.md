@@ -2,6 +2,8 @@
 
 This repository contains the build pipeline for creating Ubuntu UKI (Unified Kernel Image) with FDO Stage 2 support.
 
+See [TEST-UBUNTU-UKI.md](TEST-UBUNTU-UKI.md) for verified flows and [TODO-UBUNTU-UKI.md](TODO-UBUNTU-UKI.md) for phased installer work.
+
 ## Development Philosophy
 
 **All development and building happens on devvm.** This is the source-of-truth for code, tools, and git repos. After building, we copy required components to deployment targets (pe2, k800, onlogic, etc.).
@@ -78,6 +80,24 @@ Output:
 - Local UKI: `/tmp/ubuntu-installer-fdo.efi`
 - Local firmware server: `/tmp/fdo-firmware-server/ubuntu-installer.efi`
 - Remote firmware server: `pe2:/tmp/fdo-firmware-server/ubuntu-installer.efi`
+
+## Full Ubuntu Installer UKI
+
+The separate installer path does not modify the simple build:
+
+```bash
+./build-ubuntu-installer-uki.sh
+```
+
+It pins Ubuntu 26.04.1 LTS live-server, verifies its SHA-256, extracts the matching kernel/initrd, preserves native casper, injects the FDO premount hook and TPM endpoint, reserves `/dev/pmem0`, and builds:
+
+```text
+firmware/ubuntu-26.04.1-live-server-fdo.efi
+```
+
+Runtime test artifacts are copied to pe2 and exercised with the separately tracked `test-installer-pe2.sh`. The verified flow streamed FDO-delivered autoinstall configuration and the full 2.728 GiB ISO, mounted it through native casper, completed unattended installation to a disposable qcow2 disk, and booted the resulting `fdo-installed` Ubuntu system.
+
+See `TEST-UBUNTU-UKI.md` for hashes/results and `TODO-UBUNTU-UKI.md` for production hardening work.
 
 ## Golden Reference
 

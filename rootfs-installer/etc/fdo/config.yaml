@@ -1,0 +1,43 @@
+blob_path: ""
+debug: false
+fdo_version: 200
+
+di:
+  url: "http://10.0.2.2:8080"
+  key: "ec256"
+  key_enc: "x509"
+
+crypto:
+  cipher_suite: "A128GCM"
+  kex_suite: "ECDH256"
+
+transport:
+  tpm_path: ""
+
+operation:
+  print_device: false
+  rv_only: false
+  ignore_credential_rotation: true
+
+handlers:
+  sysconfig: {}
+  payload:
+    temp_dir: "/tmp/fdo_payloads"
+    default_action: "reject"
+    mime_types:
+      application/vnd.canonical.autoinstall+yaml:
+        enabled: true
+        destination: "/run/fdo/autoinstall/user-data"
+        command: "grep -q '^#cloud-config' {filename} && touch /run/fdo/autoinstall/meta-data"
+      application/x-iso9660-image:
+        enabled: true
+        destination: "/dev/pmem0"
+
+service_info:
+  download_dir: ""
+  echo_commands: false
+  wget_dir: ""
+  upload_paths: []
+
+fdo_sys:
+  enabled: false

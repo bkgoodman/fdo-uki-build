@@ -1,0 +1,6 @@
+assets/
+build/
+build-installer/
+firmware/
+golden/
+*.efi

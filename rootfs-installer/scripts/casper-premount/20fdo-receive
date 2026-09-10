@@ -1,0 +1,69 @@
+#!/bin/sh
+
+PREREQ=""
+
+prereqs()
+{
+    echo "$PREREQ"
+}
+
+case "$1" in
+prereqs)
+    prereqs
+    exit 0
+    ;;
+esac
+
+. /scripts/functions
+
+log_begin_msg "Preparing FDO installer payload reception"
+
+modprobe libnvdimm 2>/dev/null || true
+modprobe nd_pmem 2>/dev/null || true
+modprobe isofs 2>/dev/null || true
+udevadm settle --timeout=30 2>/dev/null || true
+
+configure_networking
+
+tries=0
+while { [ ! -e /dev/tpmrm0 ] || [ ! -e /dev/pmem0 ]; } && [ "$tries" -lt 30 ]; do
+    sleep 1
+    tries=$((tries + 1))
+done
+
+if [ ! -e /dev/tpmrm0 ]; then
+    echo "FDO installer error: /dev/tpmrm0 is unavailable" >&2
+    /bin/sh
+    exit 1
+fi
+
+if [ ! -e /dev/pmem0 ]; then
+    echo "FDO installer error: /dev/pmem0 is unavailable" >&2
+    /bin/sh
+    exit 1
+fi
+
+mkdir -p /run/fdo /tmp/fdo_payloads
+
+/usr/local/bin/fdo-endpoint -config /etc/fdo/config.yaml -to2 http://10.0.2.2:8080
+status=$?
+if [ "$status" -ne 0 ]; then
+    echo "FDO installer error: endpoint exited with status $status" >&2
+    /bin/sh
+    exit 1
+fi
+
+if [ ! -s /run/fdo/autoinstall/user-data ] || [ ! -e /run/fdo/autoinstall/meta-data ]; then
+    echo "FDO installer error: autoinstall NoCloud seed was not received" >&2
+    /bin/sh
+    exit 1
+fi
+
+if ! blkid -p -s TYPE -o value /dev/pmem0 | grep -qx iso9660; then
+    echo "FDO installer error: received payload is not ISO9660 media" >&2
+    /bin/sh
+    exit 1
+fi
+
+touch /run/fdo/installer-media.complete
+log_end_msg

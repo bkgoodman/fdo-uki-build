@@ -1,0 +1,124 @@
+# Testing Ubuntu UKIs with FDO
+
+## Known-Good Simple UKI
+
+The existing `build-uki.sh` and golden image demonstrate the completed two-stage flow:
+
+1. fdo-uefi-rs performs TO1/TO2 in UEFI.
+2. The owner delivers a UKI through `fdo.bmo`.
+3. UEFI verifies and chainloads the UKI.
+4. Linux starts networking and go-fdo-endpoint.
+5. go-fdo-endpoint reuses the same TPM credential, performs TO1/TO2, and receives small sysconfig/payload data.
+
+This build and its golden artifact remain unchanged as a regression reference.
+
+## Streaming Payload Milestone
+
+Large payloads may declare a persistent destination in go-fdo-endpoint YAML:
+
+```yaml
+handlers:
+  payload:
+    temp_dir: /tmp/fdo_payloads
+    default_action: reject
+    mime_types:
+      application/octet-stream:
+        enabled: true
+        destination: /tmp/fdo-streaming-test/received.bin
+        command: sha256sum {filename}
+```
+
+A destination selects chunked streaming. Regular output is written to a neighboring `.partial` file and atomically renamed after FDO size/hash validation. The configured command runs afterward. MIME handlers without destinations retain buffered temporary-file behavior.
+
+### Verified test
+
+A 16 MiB random payload was transferred through a real FDO 2.0 TO2 ServiceInfo exchange on 2026-09-04:
+
+- Source SHA-256: `ebbdbd5ac60b0e2181cc99c8f33c9753a97237536d469d9bfd7397034bdb4ce4`
+- Destination SHA-256: `ebbdbd5ac60b0e2181cc99c8f33c9753a97237536d469d9bfd7397034bdb4ce4`
+- Final comparison: byte-identical
+- Partial file after completion: absent
+- Post-transfer `sha256sum` command: executed successfully
+- TO2 result: credential reuse `true`
+- Transfer size/chunks: 16 MiB in approximately 16,546 payload chunks
+- Duration: approximately 10 minutes on the local debug test
+
+The first normal TO1 test exposed a pre-existing TO1D signature-verification failure in the local test setup. The streaming transfer itself was therefore completed using direct TO2; normal TO1/TO2 remains verified in the pe2 UKI environment.
+
+## Full Ubuntu Live-Server ISO Milestone
+
+Verified on 2026-09-04 with Ubuntu 26.04.1 LTS live-server amd64:
+
+- ISO size: 2,927,861,760 bytes
+- ISO SHA-256: `cc8a95cde20f6ced61a322420de00f10cc3c90ced545daa46cb9c1a117f1d927`
+- Installer UKI size: approximately 106 MiB
+- UKI source: the same ISO's `/casper/vmlinuz` and `/casper/initrd`
+- Embedded memory reservation: `memmap=2796M!4G`
+- QEMU memory: 8192 MiB
+- Endpoint payload destination: `/dev/pmem0`
+- ISO payload transfer: approximately 7 minutes 55 seconds
+- Credential reuse: true
+
+Verified flow:
+
+1. fdo-uefi-rs received and chainloaded the separate installer UKI through BMO.
+2. The Ubuntu 26.04.1 target kernel and native initramfs booted.
+3. The embedded command line created `/dev/pmem0`.
+4. The tracked casper-premount hook ran go-fdo-endpoint.
+5. Endpoint received the complete ISO through `fdo.payload` and streamed it to `/dev/pmem0`.
+6. FDO size/hash validation completed and the owner received `Payload streamed to /dev/pmem0`.
+7. Native casper found the media, mounted its ISO9660 and squashfs layers, and constructed the overlay root.
+8. Casper-bottom completed and systemd entered the live-server environment.
+9. The Subiquity snap revision 7403 mounted and its interactive serial UI started.
+
+A subsequent unattended test delivered `config/autoinstall-test.yaml` through `application/vnd.canonical.autoinstall+yaml` before the ISO payload. The endpoint atomically stored it under `/run/fdo/autoinstall`, and the casper-bottom hook copied it into the live root as both a NoCloud seed and `/autoinstall.yaml`. The installer UKI passed `autoinstall subiquity.autoinstallpath=/autoinstall.yaml`.
+
+Verified unattended result:
+
+1. Subiquity loaded and validated the FDO-delivered configuration.
+2. Storage selected the newly created 24 GiB disposable `/dev/sdb` target.
+3. Curtin partitioned, formatted, extracted, installed the kernel, configured networking, and installed GRUB.
+4. The configured late command wrote `/var/lib/fdo-autoinstall-complete` in the target.
+5. Subiquity completed and powered off the VM.
+6. Read-only inspection of the qcow2 target confirmed:
+   - marker content `FDO_AUTOINSTALL_COMPLETE`;
+   - hostname `fdo-installed`;
+   - user `ubuntu`;
+   - installed kernel/initrd and EFI boot files.
+7. A separate boot using only the installed qcow2 disk confirmed OVMF → GRUB → Linux `7.0.0-31` → root filesystem → `fdo-installed` login prompt, with cloud-init configuration completing.
+
+The successful unattended run took approximately 36 minutes from installer-kernel start through poweroff. Roughly eight minutes were spent transferring the 2.728 GiB ISO; the remaining time was casper startup, extraction, package/security updates, bootloader configuration, and shutdown.
+
+## Path Fix Verification
+
+The original issue was that the casper hook was copying the autoinstall file to `/root/autoinstall.yaml` (target filesystem), but Subiquity runs in the live environment and needs the file in the live filesystem at `/autoinstall.yaml`. After fixing the hook to copy to `/autoinstall.yaml` in the live filesystem, the unattended installation worked correctly.
+
+## Log Preservation
+
+The test harness was updated to use timestamped work directories (`/tmp/fdo-installer-test-YYYYMMDD-HHMMSS`) and preserve logs after test completion. Logs are now available for post-mortem analysis without being auto-deleted.
+
+The first NoCloud-only attempt copied the seed successfully but did not trigger Subiquity autoinstall. Source inspection of Subiquity revision 7403 showed that `subiquity.autoinstallpath` is the direct supported higher-precedence input, so the working build uses that explicit path while retaining the seed files.
+
+The first build attempt exposed two packaging/integration details now handled by the separate builder:
+
+- `unmkinitramfs` separates concatenated `early`, `early2`, and `main` archives; overlays belong in `main`, and the archives must be reconstructed in order.
+- Ubuntu 26.04.1's casper-premount directory uses an `ORDER` file, so adding an executable alone is insufficient; the FDO hook must be inserted before `20iso_scan`.
+
+The all-in-one test server consumes the firmware TO1 rendezvous blob and does not automatically register another after credential-reuse TO2. The installer hook therefore used direct TO2 for this test. Proper TO0/RV re-registration before installer onboarding remains required.
+
+## Test Environment
+
+Runtime tests use pe2:
+
+```bash
+ssh pe2
+cd ~/bkgvm
+./start4.sh
+```
+
+- Serial log: `/tmp/fdo-test4/qemu.log`
+- Server log: `/tmp/fdo-test4/server.log`
+- BMO payload directory: `/tmp/fdo-firmware-server/`
+- VNC: pe2 port 5902, commonly accessed through an SSH tunnel
+
+All source development and builds occur on devvm. Completed artifacts are copied to pe2 only for runtime testing.
