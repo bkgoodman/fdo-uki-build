@@ -63,15 +63,19 @@
 - [x] Define `application/vnd.canonical.autoinstall+yaml`
 - [x] Deliver machine-specific `user-data` before the ISO payload
 - [x] Store it atomically at `/run/fdo/autoinstall/user-data`
-- [x] Validate cloud-config marker and create NoCloud `meta-data`
-- [x] Add casper-bottom hook to copy seed into the live root
-- [x] Copy FDO payload to `/autoinstall.yaml` in the live root
+- [x] Copy FDO payload to `/autoinstall.yaml` in the live root (casper-bottom hook)
 - [x] Embed `autoinstall subiquity.autoinstallpath=/autoinstall.yaml` in installer UKI
+- [x] Fix autoinstall-test.yaml YAML parsing (quote-safe late-commands)
 - [x] Verify Subiquity revision 7403 loads and applies the FDO payload
-- [x] Install onto a fresh 24 GiB disposable QEMU disk
-- [x] Verify completion marker, hostname, user, kernel/initrd, and EFI files read-only
+- [x] Install onto a fresh 24 GiB disposable QEMU disk (6.2 GiB used)
+- [x] Verify completion marker (`FDO_AUTOINSTALL_COMPLETE`), hostname (`fdo-installed`), user (`fdo`)
 - [x] Boot the installed qcow2 and reach the `fdo-installed` login prompt
 - [ ] Replace test password recipe with production secret/identity policy
+
+### Resolved Issues
+
+- **Autoinstall YAML parsing**: Subiquity's YAML parser failed on late-commands containing embedded shell quotes (`'...'` with `"..."` inside). Fixed by YAML-double-quoting complex commands.
+- **Cloud-init timeout**: `cloud-config.service` hung for 10 minutes waiting for snap seeding (`cc_ubuntu_autoinstall` calls `wait_for_snap_seeded()`). Subiquity has a 600-second timeout for `cloud-init status --wait`, after which it proceeds. The autoinstall is delivered directly via `subiquity.autoinstallpath`, bypassing cloud-init.
 
 ## Phase 6: Production Hardening
 
@@ -81,3 +85,24 @@
 - [ ] Add interrupted-transfer/reboot recovery
 - [ ] Add Secure Boot signing and lockdown validation
 - [ ] Validate on physical UEFI hardware
+
+## Phase 7: SSH Host Key Transmission
+
+- [x] Generate SSH host keys in initramfs using Go (no ssh-keygen dependency)
+- [x] Copy SSH host keys to target during installation (late-commands)
+- [x] Prevent cloud-init from deleting/regenerating SSH keys (`ssh_deletekeys: false`, `ssh_genkeytypes: []`)
+- [x] Fix FDO 2.0 Credentials FSIM protocol issue (send pubkey in `Receive()` not `Yield()`)
+- [x] Fix server-side Credentials FSIM (send pubkey-result in `produceInfo()` before `active=false`)
+- [x] Transmit SSH host keys and device IP to server during TO2
+- [x] Verify server receives and stores all 3 key types (ed25519, ecdsa, rsa) + IP
+- [x] Verify installed VM SSH host keys match FDO-registered keys exactly
+- [ ] Persist received SSH keys server-side (database or file; currently only logged to stdout/server.log)
+- [ ] Implement server-side `known_hosts` file generation from registered keys
+- [ ] Add SSH host key fingerprint verification test (connect to installed VM, compare fingerprint)
+- [ ] Commit go-fdo changes: `fsim/credentials_device.go`, `fsim/credentials_owner.go`, `fsim/payload_owner.go`
+- [ ] Commit go-fdo-endpoint changes: `ssh_host_keygen.go`, `credentials_device.go`, `main.go`, `generic_fsim.go`, `fsim_callbacks.go`, `go.mod`
+
+### Resolved Issues
+
+- **Credentials FSIM protocol**: FDO 2.0 never calls `Yield()` on device modules; `Receive()` must return the pubkey data directly. Fixed in `credentials_device.go`. Server side fixed in `credentials_owner.go` to send `pubkey-result` before setting `active=false`.
+- **Cloud-init key regeneration**: Cloud-init's `cc_ssh` module deletes and regenerates SSH host keys on first boot by default (`ssh_deletekeys: true`). Fixed by writing a drop-in config (`99-fdo-preserve-ssh-keys.cfg`) with `ssh_deletekeys: false` and `ssh_genkeytypes: []`.

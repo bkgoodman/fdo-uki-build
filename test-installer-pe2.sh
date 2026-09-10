@@ -53,7 +53,9 @@ sed -i "s/FDO OWNERSHIP VOUCHER/OWNERSHIP VOUCHER/g" "$VOUCHER"
 "$SERVER" server -http 0.0.0.0:8080 -db "$WORKDIR/fdo.db" -reuse-cred \
     -bmo "application/x-uefi-image:$UKI" \
     -payload "application/vnd.canonical.autoinstall+yaml:$AUTOINSTALL" \
-    -payload "application/x-iso9660-image:$ISO" > "$WORKDIR/server.log" 2>&1 &
+    -payload "application/x-iso9660-image:$ISO" \
+    -request-pubkey "device_info:device_info" \
+    > "$WORKDIR/server.log" 2>&1 &
 SERVER_PID=$!
 sleep 2
 
@@ -79,7 +81,7 @@ sudo qemu-system-x86_64 \
     -tpmdev emulator,id=tpm0,chardev=chrtpm \
     -device tpm-tis,tpmdev=tpm0 \
     -device virtio-rng-pci \
-    -nic user,model=virtio-net-pci \
+    -nic user,model=virtio-net-pci,hostfwd=tcp::2222-:22 \
     -vnc :3 -serial mon:stdio 2>&1 | tee "$WORKDIR/qemu.log"
 
 echo "=== Test complete ==="
@@ -88,6 +90,9 @@ echo "  - Serial output: $WORKDIR/qemu.log"
 echo "  - Server log: $WORKDIR/server.log"
 echo "  - Database: $WORKDIR/fdo.db"
 echo "  - TPM state: $WORKDIR/tpm2-00.permall"
+echo ""
+echo "=== SSH host keys / IP address received by owner during TO2 ==="
+grep -A5 "Received public key registration" "$WORKDIR/server.log" || echo "  (none found - check server.log)"
 echo ""
 echo "To clean up: rm -rf $WORKDIR"
 

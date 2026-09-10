@@ -62,9 +62,10 @@ mkdir -p "$MAIN_ROOT/usr/local/bin"
     GOROOT="$GO_ROOT" GOPATH=/tmp/gopath "$GO_ROOT/bin/go" build -tags=tpm -o "$MAIN_ROOT/usr/local/bin/fdo-endpoint" .
 )
 cp -a "$REPO_DIR/rootfs-installer/." "$MAIN_ROOT/"
+cp "$REPO_DIR/rootfs-installer/scripts/generate-ssh-host-keys.sh" "$MAIN_ROOT/scripts/"
 sed -i '/20iso_scan/i /scripts/casper-premount/20fdo-receive "$@"' "$MAIN_ROOT/scripts/casper-premount/ORDER"
 sed -i '/99casperboot/i /scripts/casper-bottom/62fdo-autoinstall "$@"' "$MAIN_ROOT/scripts/casper-bottom/ORDER"
-chmod 0755 "$MAIN_ROOT/scripts/casper-premount/20fdo-receive" "$MAIN_ROOT/scripts/casper-bottom/62fdo-autoinstall" "$MAIN_ROOT/usr/local/bin/fdo-endpoint"
+chmod 0755 "$MAIN_ROOT/scripts/casper-premount/20fdo-receive" "$MAIN_ROOT/scripts/casper-bottom/62fdo-autoinstall" "$MAIN_ROOT/scripts/generate-ssh-host-keys.sh" "$MAIN_ROOT/usr/local/bin/fdo-endpoint"
 
 : > "$MODIFIED_INITRD"
 for archive in early early2; do

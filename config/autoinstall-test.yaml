@@ -1,4 +1,3 @@
-#cloud-config
 autoinstall:
   version: 1
   refresh-installer:
@@ -8,14 +7,30 @@ autoinstall:
     layout: us
   identity:
     hostname: fdo-installed
-    username: ubuntu
-    password: "$6$fdo-test$nJUkpBk7NhnmaPVXiAhlsrMvUdYPzqFE6vgjdf1LaN6bD2kaximuowWOLzJSn7mZXizGNlORpw3ct/w4yrTOj."
+    username: fdo
+    # Password: "fdo" (hashed)
+    password: "$6$FDO.SALT$rD0sGDQl0UONZCEGST2cf5KpVgjN8Cb6ETtvFLDHA.fCWqM4u6Jj6l6XG5XUlave7lGunXO3RMPb.In/oKbqR/"
+    realname: "FDO Device User"
   ssh:
     install-server: true
-    allow-pw: true
+    allow-pw: false
+    authorized-keys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIECb1b7JjbIThvin1gum8LH5ctWoCCKGuUsyAQoa3ko3 fdo-onboarding"
   storage:
     layout:
       name: direct
   late-commands:
+    # Create fdo user with sudo access without password
+    - curtin in-target --target=/target -- sh -c 'echo "fdo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-fdo-user'
+    - curtin in-target --target=/target -- sh -c 'chmod 0440 /etc/sudoers.d/90-fdo-user'
+    # Ensure SSH password auth is disabled
+    - curtin in-target --target=/target -- sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+    # Copy SSH host keys from installer to target (generated during FDO onboarding)
+    - "sh -c 'if [ -d /run/fdo/ssh-host-keys ]; then cp -a /run/fdo/ssh-host-keys/* /target/etc/ssh/ && chmod 600 /target/etc/ssh/ssh_host_*_key && chmod 644 /target/etc/ssh/ssh_host_*.pub; fi'"
+    # Prevent cloud-init from deleting/regenerating SSH host keys on first boot.
+    # ssh_deletekeys: false  - do not delete existing host keys
+    # ssh_genkeytypes: []    - do not generate any new host keys
+    - "sh -c 'printf \"ssh_deletekeys: false\\nssh_genkeytypes: []\\n\" > /target/etc/cloud/cloud.cfg.d/99-fdo-preserve-ssh-keys.cfg'"
+    # Mark installation complete
     - curtin in-target --target=/target -- sh -c 'echo FDO_AUTOINSTALL_COMPLETE > /var/lib/fdo-autoinstall-complete'
   shutdown: poweroff

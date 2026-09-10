@@ -45,6 +45,19 @@ fi
 
 mkdir -p /run/fdo /tmp/fdo_payloads
 
+# Generate SSH host keys for FDO onboarding
+# These will be available for the endpoint to convey back to the owner via the
+# fdo.credentials FSIM (Registered Credentials flow) during TO2.
+if [ -x /scripts/generate-ssh-host-keys.sh ]; then
+    /scripts/generate-ssh-host-keys.sh
+fi
+
+# Capture the device's current IP address for convenience (non-security-relevant).
+# This is also conveyed back to the owner via the fdo.credentials FSIM during TO2,
+# so the operator can locate the freshly-installed device without a separate scan.
+ip -4 -o addr show scope global 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -1 > /run/fdo/device-ip.txt
+echo "FDO installer: device IP address: $(cat /run/fdo/device-ip.txt)"
+
 /usr/local/bin/fdo-endpoint -config /etc/fdo/config.yaml -to2 http://10.0.2.2:8080
 status=$?
 if [ "$status" -ne 0 ]; then
@@ -53,8 +66,8 @@ if [ "$status" -ne 0 ]; then
     exit 1
 fi
 
-if [ ! -s /run/fdo/autoinstall/user-data ] || [ ! -e /run/fdo/autoinstall/meta-data ]; then
-    echo "FDO installer error: autoinstall NoCloud seed was not received" >&2
+if [ ! -s /run/fdo/autoinstall/user-data ]; then
+    echo "FDO installer error: autoinstall config was not received" >&2
     /bin/sh
     exit 1
 fi

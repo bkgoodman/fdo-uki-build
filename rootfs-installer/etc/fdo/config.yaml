@@ -28,7 +28,7 @@ handlers:
       application/vnd.canonical.autoinstall+yaml:
         enabled: true
         destination: "/run/fdo/autoinstall/user-data"
-        command: "grep -q '^#cloud-config' {filename} && touch /run/fdo/autoinstall/meta-data"
+        command: "echo 'Autoinstall config received: $(wc -c < {filename}) bytes'"
       application/x-iso9660-image:
         enabled: true
         destination: "/dev/pmem0"

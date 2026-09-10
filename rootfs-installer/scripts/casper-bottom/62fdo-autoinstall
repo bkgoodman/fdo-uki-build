@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PREREQ=""
-DESCRIPTION="Installing FDO-delivered NoCloud seed..."
+DESCRIPTION="Installing FDO-delivered autoinstall config..."
 
 prereqs()
 {
@@ -19,25 +19,20 @@ esac
 
 log_begin_msg "$DESCRIPTION"
 
-if [ ! -s /run/fdo/autoinstall/user-data ] || [ ! -e /run/fdo/autoinstall/meta-data ]; then
-    echo "FDO installer error: NoCloud seed is incomplete" >&2
-    exit 1
+if [ ! -s /run/fdo/autoinstall/user-data ]; then
+    echo "FDO: No autoinstall user-data found, skipping" >&2
+    log_end_msg
+    exit 0
 fi
 
-echo "FDO: Copying autoinstall files..."
-echo "FDO: user-data size: $(wc -c < /run/fdo/autoinstall/user-data)"
-echo "FDO: meta-data exists: $([ -e /run/fdo/autoinstall/meta-data ] && echo yes || echo no)"
+# Copy the autoinstall config to /root/autoinstall.yaml.
+# After casper root-switch, /root/ becomes /, so this file ends up at
+# /autoinstall.yaml — matching the kernel cmdline parameter:
+#   subiquity.autoinstallpath=/autoinstall.yaml
+cp /run/fdo/autoinstall/user-data /root/autoinstall.yaml
+chmod 0600 /root/autoinstall.yaml
 
-seed_dir=/root/var/lib/cloud/seed/nocloud
-mkdir -p "$seed_dir"
-cp /run/fdo/autoinstall/user-data "$seed_dir/user-data"
-cp /run/fdo/autoinstall/meta-data "$seed_dir/meta-data"
-cp /run/fdo/autoinstall/user-data /autoinstall.yaml
-chmod 0600 "$seed_dir/user-data" /autoinstall.yaml
-chmod 0644 "$seed_dir/meta-data"
-
-echo "FDO: Files copied to $seed_dir and /autoinstall.yaml"
-echo "FDO: /autoinstall.yaml exists: $([ -e /autoinstall.yaml ] && echo yes || echo no)"
-echo "FDO: /autoinstall.yaml size: $(wc -c < /autoinstall.yaml)"
+echo "FDO: autoinstall.yaml installed ($(wc -c < /root/autoinstall.yaml) bytes)"
+echo "FDO: first line: $(head -1 /root/autoinstall.yaml)"
 
 log_end_msg
