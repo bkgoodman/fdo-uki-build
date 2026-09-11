@@ -20,7 +20,7 @@ fi
 
 echo "=== Booting installed VM ==="
 echo "Target disk: $TARGET_DISK"
-echo "VNC: pe2:5905"
+echo "VNC: ${VNC_DISPLAY:-:5}"
 echo "Serial: mon:stdio (this terminal)"
 echo ""
 echo "Press Ctrl+A then X to quit QEMU monitor"
@@ -34,4 +34,4 @@ sudo qemu-system-x86_64 \
     -drive file="$TARGET_DISK",format=qcow2,index=0 \
     -device virtio-rng-pci \
     -nic user,model=virtio-net-pci \
-    -vnc :5 -serial mon:stdio
+    -vnc "${VNC_DISPLAY:-:5}" -serial mon:stdio

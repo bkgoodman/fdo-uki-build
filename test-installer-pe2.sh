@@ -1,20 +1,45 @@
 #!/bin/bash
+#
+# End-to-end FDO installer test
+#
+# Runs on the QEMU test host. Performs DI via quick-di-tpm, starts the
+# FDO server with BMO + payload + credentials FSIMs, and boots the
+# installer UKI in QEMU with a software TPM.
+#
+# Prerequisites (on the test host):
+#   - server-installer binary    (FDO server, built from go-fdo examples/cmd)
+#   - quick-di-tpm binary        (DI helper, built from go-fdo-quick-di)
+#   - efi-disk-release.img       (UEFI FDO client disk, built from fdo-uefi-rs)
+#   - Installer UKI + ISO + autoinstall in $FIRMWARE_DIR
+#   - swtpm, qemu-system-x86_64, qemu-img
+#
+# All paths are configurable via environment variables.
 
 set -e
 
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 WORKDIR=/tmp/fdo-installer-test-$TIMESTAMP
 VOUCHER_DIR=/tmp/fdo-installer-vouchers-$TIMESTAMP
-SERVER=/home/bkg/bkgvm/server-installer
-UKI=/tmp/fdo-firmware-server/ubuntu-26.04.1-live-server-fdo.efi
-ISO=/tmp/fdo-firmware-server/ubuntu-26.04.1-live-server-amd64.iso
-AUTOINSTALL=/tmp/fdo-firmware-server/autoinstall-test.yaml
-TARGET_DISK="$WORKDIR/target.qcow2"
 
-if [ ! -x "$SERVER" ] || [ ! -f "$UKI" ] || [ ! -f "$ISO" ] || [ ! -f "$AUTOINSTALL" ]; then
-    echo "Missing server, UKI, or ISO artifact" >&2
-    exit 1
-fi
+# Paths — override via environment for your deployment layout
+SERVER="${FDO_SERVER:-$HOME/server-installer}"
+QUICK_DI="${FDO_QUICK_DI:-$HOME/quick-di-tpm}"
+EFI_DISK="${FDO_EFI_DISK:-$HOME/efi-disk-release.img}"
+FIRMWARE_DIR="${FDO_FIRMWARE_DIR:-/tmp/fdo-firmware-server}"
+UKI="$FIRMWARE_DIR/ubuntu-26.04.1-live-server-fdo.efi"
+ISO="$FIRMWARE_DIR/ubuntu-26.04.1-live-server-amd64.iso"
+AUTOINSTALL="$FIRMWARE_DIR/autoinstall-test.yaml"
+TARGET_DISK="$WORKDIR/target.qcow2"
+VNC_DISPLAY="${VNC_DISPLAY:-:3}"
+SSH_HOST_FWD="${SSH_HOST_FWD:-2222}"
+
+# Validate
+for f in "$SERVER" "$QUICK_DI" "$EFI_DISK" "$UKI" "$ISO" "$AUTOINSTALL"; do
+    if [ ! -e "$f" ]; then
+        echo "Missing: $f" >&2
+        exit 1
+    fi
+done
 
 echo "=== Cleanup ==="
 sudo killall -9 swtpm server-installer qemu-system-x86_64 2>/dev/null || true
@@ -42,7 +67,7 @@ if [ ! -S "$WORKDIR/swtpm-ctrl" ]; then
 fi
 
 timeout 30 env FDO_TPM_DEVICE="$WORKDIR/swtpm-server" \
-    /home/bkg/quick-di-tpm -quick -protocol-version 2.0 -rv 10.0.2.2:8080:http \
+    "$QUICK_DI" -quick -protocol-version 2.0 -rv 10.0.2.2:8080:http \
     -device-info FDO-Ubuntu-Live-Server-Installer -output-dir "$VOUCHER_DIR" \
     -signover-key "$WORKDIR/owner.pem"
 
@@ -67,7 +92,8 @@ fi
 cp /usr/share/OVMF/OVMF_VARS_4M.fd "$WORKDIR/OVMF_VARS.fd"
 
 echo "=== Starting installer test ==="
-echo "VNC: pe2:5903"
+echo "VNC: $VNC_DISPLAY"
+echo "SSH forward: localhost:$SSH_HOST_FWD -> guest:22"
 echo "Serial log: $WORKDIR/qemu.log"
 echo "Server log: $WORKDIR/server.log"
 
@@ -75,14 +101,14 @@ sudo qemu-system-x86_64 \
     -machine q35 -m 8192 -no-reboot \
     -drive if=pflash,format=raw,unit=0,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.fd \
     -drive if=pflash,format=raw,unit=1,file="$WORKDIR/OVMF_VARS.fd" \
-    -drive file=/home/bkg/bkgvm/efi-disk-release.img,format=raw,index=0 \
+    -drive file="$EFI_DISK",format=raw,index=0 \
     -drive file="$TARGET_DISK",format=qcow2,index=1 \
     -chardev socket,id=chrtpm,path="$WORKDIR/swtpm-ctrl" \
     -tpmdev emulator,id=tpm0,chardev=chrtpm \
     -device tpm-tis,tpmdev=tpm0 \
     -device virtio-rng-pci \
-    -nic user,model=virtio-net-pci,hostfwd=tcp::2222-:22 \
-    -vnc :3 -serial mon:stdio 2>&1 | tee "$WORKDIR/qemu.log"
+    -nic user,model=virtio-net-pci,hostfwd=tcp::${SSH_HOST_FWD}-:22 \
+    -vnc "$VNC_DISPLAY" -serial mon:stdio 2>&1 | tee "$WORKDIR/qemu.log"
 
 echo "=== Test complete ==="
 echo "Logs preserved in: $WORKDIR"

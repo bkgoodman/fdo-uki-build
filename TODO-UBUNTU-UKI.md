@@ -35,14 +35,14 @@
 
 - [x] Create `build-ubuntu-installer-uki.sh` without changing `build-uki.sh`
 - [x] Pin Ubuntu 26.04.1 LTS live-server ISO URL, size, version, and SHA-256
-- [x] Download and verify the ISO on devvm
+- [x] Download and verify the ISO on the build host
 - [x] Extract matching `/casper/vmlinuz` and `/casper/initrd`
 - [x] Preserve native Ubuntu `/init`, casper, cloud-init, and Subiquity
 - [x] Add installer-specific rootfs overlay and endpoint YAML
 - [x] Reconstruct concatenated `early`, `early2`, and `main` initramfs archives
 - [x] Insert FDO premount hook into Ubuntu's casper `ORDER` before `20iso_scan`
 - [x] Compute and embed Ubuntu-compatible `memmap=2796M!4G`
-- [x] Build the installer UKI entirely on devvm
+- [x] Build the installer UKI entirely on the build host
 - [x] Deploy under a distinct filename without touching simple/golden artifacts
 
 ## Phase 4: Casper and `/dev/pmem0` Integration

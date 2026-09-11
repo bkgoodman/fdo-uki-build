@@ -1,0 +1,59 @@
+# Stage 2 FDO Endpoint Configuration
+# Runs inside UKI after Stage 1 chainload
+
+blob_path: ""
+debug: true
+fdo_version: 200
+
+di:
+  url: "http://10.0.2.2:8080"
+  key: "ec256"
+  key_enc: "x509"
+
+crypto:
+  cipher_suite: "A128GCM"
+  kex_suite: "ECDH256"
+
+transport:
+  insecure_tls: true
+  tpm_path: ""
+
+operation:
+  print_device: false
+  rv_only: false
+
+# Generic Handler Configuration
+handlers:
+  sysconfig:
+    hostname:
+      command: "echo 'Setting hostname to: {value}'"
+      enabled: true
+    timezone:
+      command: "echo 'Setting timezone to: {value}'"
+      enabled: true
+    ntp-server:
+      command: "echo 'Setting NTP server to: {value}'"
+      enabled: true
+
+  payload:
+    temp_dir: "/tmp/fdo_payloads"
+    default_action: "accept"
+    mime_types:
+      application/octet-stream:
+        enabled: true
+        command: "echo 'Received binary payload: {filename} ({size} bytes)'"
+      application/json:
+        enabled: true
+        command: "echo 'Received JSON payload: {filename}'"
+      text/plain:
+        enabled: true
+        command: "echo 'Received text payload: {filename}'"
+
+service_info:
+  download_dir: ""
+  echo_commands: true
+  wget_dir: ""
+  upload_paths: []
+
+fdo_sys:
+  enabled: false

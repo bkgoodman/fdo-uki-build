@@ -43,7 +43,7 @@ A 16 MiB random payload was transferred through a real FDO 2.0 TO2 ServiceInfo e
 - Transfer size/chunks: 16 MiB in approximately 16,546 payload chunks
 - Duration: approximately 10 minutes on the local debug test
 
-The first normal TO1 test exposed a pre-existing TO1D signature-verification failure in the local test setup. The streaming transfer itself was therefore completed using direct TO2; normal TO1/TO2 remains verified in the pe2 UKI environment.
+The first normal TO1 test exposed a pre-existing TO1D signature-verification failure in the local test setup. The streaming transfer itself was therefore completed using direct TO2; normal TO1/TO2 remains verified in the QEMU UKI environment.
 
 ## Full Ubuntu Live-Server ISO Milestone
 
@@ -135,17 +135,11 @@ The all-in-one test server consumes the firmware TO1 rendezvous blob and does no
 
 ## Test Environment
 
-Runtime tests use pe2:
+Runtime tests run on a QEMU test host. All paths are configurable via environment variables in the test scripts. See `test-installer-pe2.sh` for details.
 
-```bash
-ssh pe2
-cd ~/bkgvm
-./start4.sh
-```
+- Serial log: `$WORKDIR/qemu.log`
+- Server log: `$WORKDIR/server.log`
+- BMO payload directory: `$FDO_FIRMWARE_DIR` (default `/tmp/fdo-firmware-server/`)
+- VNC: configurable via `$VNC_DISPLAY`
 
-- Serial log: `/tmp/fdo-test4/qemu.log`
-- Server log: `/tmp/fdo-test4/server.log`
-- BMO payload directory: `/tmp/fdo-firmware-server/`
-- VNC: pe2 port 5902, commonly accessed through an SSH tunnel
-
-All source development and builds occur on devvm. Completed artifacts are copied to pe2 only for runtime testing.
+All source development and builds occur on the build host. Completed artifacts are copied to the test host only for runtime testing.

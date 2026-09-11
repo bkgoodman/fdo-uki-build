@@ -6,7 +6,7 @@ See [TEST-UBUNTU-UKI.md](TEST-UBUNTU-UKI.md) for verified flows and [TODO-UBUNTU
 
 ## Development Philosophy
 
-**All development and building happens on devvm.** This is the source-of-truth for code, tools, and git repos. After building, we copy required components to deployment targets (pe2, k800, onlogic, etc.).
+**All development and building happens on the build host.** This is the source-of-truth for code, tools, and git repos. After building, we copy required components to deployment targets (QEMU test hosts, edge devices, etc.).
 
 ## Overview
 
@@ -37,65 +37,53 @@ The UKI is built from the Ubuntu mini-ISO and includes:
 
 ## Building
 
-### Prerequisites
+### Simple UKI (mini-ISO)
 
-- Ubuntu mini-ISO: `assets/ubuntu-mini-iso-26.10-snapshot1-mini-iso-amd64.iso`
+Prerequisites:
+- Ubuntu mini-ISO placed in `assets/` (or set `MINI_ISO_URL` in `config/simple-uki.env`)
 - go-fdo-endpoint binary: `assets/fdo-endpoint` (built from go-fdo-endpoint with `-tags=tpm`)
-- ukify (systemd-ukify package)
-- cpio, gzip, mount, scp
-
-### Asset Setup
-
-Copy required assets to the `assets/` directory:
+- objcopy, cpio, gzip, mount
 
 ```bash
-# Copy Ubuntu mini-ISO from pe2
-scp pe2:/home/bkg/bkgvm/ubuntu-mini-iso-26.10-snapshot1-mini-iso-amd64.iso assets/
+# Build go-fdo-endpoint
+cd ../go-fdo-endpoint
+go build -tags=tpm -o ../fdo-uki-build/assets/fdo-endpoint .
 
-# Build go-fdo-endpoint on devvm
-cd ~/go-fdo-endpoint
-GOROOT=/home/bradgoodman/go GOPATH=/tmp/gopath /home/bradgoodman/go/bin/go build -tags=tpm -o ~/fdo-uki-build/assets/fdo-endpoint .
-```
-
-**Note**: The `go-fdo-endpoint` build requires the fdosys build tag fix (see go-fdo-endpoint repo).
-
-### Build Script
-
-```bash
+# Build the UKI
 ./build-uki.sh
 ```
 
 This will:
 1. Extract kernel and initrd from the mini-ISO
 2. Unpack the initrd
-3. Add custom init script
-4. Add go-fdo-endpoint binary
-5. Add config_generic.yaml
-6. Repack the initrd
-7. Build UKI with ukify
-8. Copy to local firmware server
-9. Deploy to remote host (pe2)
+3. Inject init script, fdo-endpoint, and config from `rootfs-simple/`
+4. Repack the initrd
+5. Build UKI with objcopy
+6. Optionally deploy to `$DEPLOY_HOST` (set in `config/simple-uki.env`)
 
-Output:
-- Local UKI: `/tmp/ubuntu-installer-fdo.efi`
-- Local firmware server: `/tmp/fdo-firmware-server/ubuntu-installer.efi`
-- Remote firmware server: `pe2:/tmp/fdo-firmware-server/ubuntu-installer.efi`
+Output: `firmware/ubuntu-installer-fdo.efi`
 
-## Full Ubuntu Installer UKI
+### Full Ubuntu Installer UKI
 
-The separate installer path does not modify the simple build:
+The installer path builds a UKI from the Ubuntu 26.04.1 LTS live-server ISO:
 
 ```bash
 ./build-ubuntu-installer-uki.sh
 ```
 
-It pins Ubuntu 26.04.1 LTS live-server, verifies its SHA-256, extracts the matching kernel/initrd, preserves native casper, injects the FDO premount hook and TPM endpoint, reserves `/dev/pmem0`, and builds:
+It downloads and verifies the pinned ISO (config in `config/ubuntu-installer.env`), extracts the matching kernel/initrd, preserves native casper, injects the FDO premount hook and TPM endpoint, reserves `/dev/pmem0`, and builds:
 
 ```text
 firmware/ubuntu-26.04.1-live-server-fdo.efi
 ```
 
-Runtime test artifacts are copied to pe2 and exercised with `test-installer-pe2.sh`. The verified end-to-end flow:
+To deploy to a test host after building:
+
+```bash
+DEPLOY=1 DEPLOY_HOST=<hostname> ./build-ubuntu-installer-uki.sh
+```
+
+The verified end-to-end flow:
 
 1. FDO TO1/TO2 with credential reuse and TPM-backed identity
 2. SSH host keys generated and transmitted to server via Credentials FSIM
@@ -109,15 +97,15 @@ Runtime test artifacts are copied to pe2 and exercised with `test-installer-pe2.
 10. SSH host keys on installed system match FDO-registered keys exactly
 
 **Current Status (2026-09-11)**:
-- ✅ FDO onboarding (TO1/TO2) with credential reuse works
-- ✅ Ubuntu ISO streaming to /dev/pmem0 works
-- ✅ Autoinstall.yaml delivery via FDO works
-- ✅ Subiquity autoinstall triggers and completes unattended installation
-- ✅ SSH host keys generated in initramfs (Go implementation)
-- ✅ SSH host keys transmitted to server via FDO Credentials FSIM
-- ✅ SSH host keys preserved on installed system (cloud-init key regeneration disabled)
-- ✅ Installed VM SSH keys verified to match FDO-registered keys exactly
-- ✅ Installed VM boots to `fdo-installed` login prompt
+- FDO onboarding (TO1/TO2) with credential reuse works
+- Ubuntu ISO streaming to /dev/pmem0 works
+- Autoinstall.yaml delivery via FDO works
+- Subiquity autoinstall triggers and completes unattended installation
+- SSH host keys generated in initramfs (Go implementation)
+- SSH host keys transmitted to server via FDO Credentials FSIM
+- SSH host keys preserved on installed system (cloud-init key regeneration disabled)
+- Installed VM SSH keys verified to match FDO-registered keys exactly
+- Installed VM boots to `fdo-installed` login prompt
 
 See `TEST-UBUNTU-UKI.md` for hashes/results and `TODO-UBUNTU-UKI.md` for production hardening work.
 
@@ -219,8 +207,8 @@ When the UKI boots:
 3. Casper's `ORDER` runs `20fdo-receive` during premount:
    - `generate-ssh-host-keys.sh` creates ed25519/ecdsa/rsa key pairs
    - `fdo-endpoint` runs direct TO2 against the FDO server
-   - Server sends autoinstall YAML (small, fast) → written to `/run/fdo/autoinstall/user-data`
-   - Server sends the full ISO (~2.7 GiB) → streamed to `/dev/pmem0`
+   - Server sends autoinstall YAML (small, fast) -> written to `/run/fdo/autoinstall/user-data`
+   - Server sends the full ISO (~2.7 GiB) -> streamed to `/dev/pmem0`
    - Endpoint sends SSH host keys + device IP back to server via `fdo.credentials` FSIM
 4. Casper's `20iso_scan` finds ISO9660 on `/dev/pmem0`, mounts it
 5. Casper mounts squashfs layers, constructs the overlay live root
@@ -287,7 +275,7 @@ The SSH key flow spans three repos:
 The server initiates the key exchange via the `-request-pubkey` flag on the FDO server CLI:
 
 ```bash
-server-installer server ... -request-pubkey "device_info:device_info"
+fdo server ... -request-pubkey "device_info:device_info"
 ```
 
 The format is `type:id` where `id` must match what the device expects (the endpoint's `RegisterCredentialsDevice` checks for `credentialID == "device_info"`). This causes `CredentialsOwner` to send a `pubkey-request` during TO2 ServiceInfo.
@@ -295,13 +283,13 @@ The format is `type:id` where `id` must match what the device expects (the endpo
 **Protocol sequence (during TO2 ServiceInfo exchange):**
 
 ```
-Server → Device:  fdo.credentials:active = true
-Server → Device:  fdo.credentials:pubkey-request = CBOR{-1: "device_info", -2: 1}
-Device → Server:  fdo.credentials:pubkey-begin = CBOR{length, credential_id, type, ...}
-Device → Server:  fdo.credentials:pubkey-data = <chunk(s) of JSON payload>
-Device → Server:  fdo.credentials:pubkey-end = CBOR{}
-Server → Device:  fdo.credentials:pubkey-result = CBOR{status: 0, message: "..."}
-Server → Device:  fdo.credentials:active = false
+Server -> Device:  fdo.credentials:active = true
+Server -> Device:  fdo.credentials:pubkey-request = CBOR{-1: "device_info", -2: 1}
+Device -> Server:  fdo.credentials:pubkey-begin = CBOR{length, credential_id, type, ...}
+Device -> Server:  fdo.credentials:pubkey-data = <chunk(s) of JSON payload>
+Device -> Server:  fdo.credentials:pubkey-end = CBOR{}
+Server -> Device:  fdo.credentials:pubkey-result = CBOR{status: 0, message: "..."}
+Server -> Device:  fdo.credentials:active = false
 ```
 
 **What the device sends** (assembled in `go-fdo-endpoint/credentials_device.go`):
@@ -330,7 +318,7 @@ The `OnPublicKeyReceived` callback prints the received data to stdout:
   Key:  {"ssh_host_ed25519_key":"ssh-ed25519 AAAA...","ip_address":"10.0.2.15"} (length: 950 bytes)
 ```
 
-**Current limitation:** The server only logs the received keys to stdout (which ends up in `server.log`). There is no persistence — no database storage, no `known_hosts` file generation, no webhook. For our testing, we extract the keys from `server.log` with `grep` to build a `known_hosts` file and verify the SSH connection. Production use would need the `OnPublicKeyReceived` callback to write to a database or known_hosts file.
+**Current limitation:** The server only logs the received keys to stdout (which ends up in `server.log`). There is no persistence — no database storage, no `known_hosts` file generation, no webhook. For testing, we extract the keys from `server.log` with `grep` to build a `known_hosts` file and verify the SSH connection. Production use would need the `OnPublicKeyReceived` callback to write to a database or known_hosts file.
 
 ### Key Technical Gotcha: FDO 2.0 Yield() vs Receive()
 
@@ -355,24 +343,22 @@ The current working UKI (built manually before this script) is preserved as a re
 
 ## Testing
 
-### Server Setup
+### End-to-End Test
+
+The `test-installer-pe2.sh` script runs the full onboarding flow on a QEMU test host:
 
 ```bash
-ssh pe2 ~/bkgvm/start-server.sh
+# On the test host (requires swtpm, qemu, server-installer, quick-di-tpm)
+./test-installer-pe2.sh
 ```
 
-This starts:
-- swtpm (TPM simulator)
-- FDO server with BMO, sysconfig, and payload FSIMs
-- HTTP server for firmware delivery
+All paths are configurable via environment variables (`FDO_SERVER`, `FDO_QUICK_DI`, `FDO_EFI_DISK`, `FDO_FIRMWARE_DIR`). See the script header for details.
 
-### QEMU Boot
+### Boot Installed VM
 
 ```bash
-ssh pe2 ~/bkgvm/start4.sh
+./boot-installed-vm.sh /tmp/fdo-installer-test-<timestamp>/target.qcow2
 ```
-
-VNC is on `pe2:5902`.
 
 ## Configuration
 
@@ -383,7 +369,7 @@ VNC is on `pe2:5902`.
 
 ### go-fdo-endpoint Config
 
-Located at `/etc/fdo/config_generic.yaml` in the initrd:
+Located at `/etc/fdo/config_generic.yaml` in the initrd (simple UKI) or `/etc/fdo/config.yaml` (installer UKI):
 - FDO version: 200
 - DI URL: `http://10.0.2.2:8080`
 - Crypto: A128GCM, ECDH256
@@ -401,7 +387,7 @@ Located at `/etc/fdo/config_generic.yaml` in the initrd:
 
 ### TPM Socket Issues
 
-QEMU 10.2.1 has compatibility issues with swtpm sockets. Use the full `start4.sh` script instead of running QEMU separately.
+QEMU 10.2.1 has compatibility issues with swtpm sockets. Use the full test script instead of running QEMU separately.
 
 ### Credential Reuse
 
@@ -409,9 +395,9 @@ Ensure the server has `-reuse-cred` flag. Without it, go-fdo-endpoint will gener
 
 ### VNC Connection
 
-VNC is on port 5902 (`pe2:5902`). If connection fails, check that QEMU is running:
+VNC display is configurable via `VNC_DISPLAY` environment variable. If connection fails, check that QEMU is running:
 ```bash
-ssh pe2 "ps aux | grep qemu"
+ps aux | grep qemu
 ```
 
 ## Files
@@ -421,8 +407,12 @@ ssh pe2 "ps aux | grep qemu"
 - `test-installer-pe2.sh` — End-to-end test: TPM init, FDO server, QEMU, autoinstall, verification
 - `boot-installed-vm.sh` — Boot an installed qcow2 for manual inspection
 - `config/ubuntu-installer.env` — Pinned ISO URL, hash, size, UKI filename
+- `config/simple-uki.env` — Simple UKI build configuration (mini-ISO name, deploy target)
 - `config/autoinstall-test.yaml` — Test autoinstall config (hostname, user, SSH, late-commands)
-- `rootfs-installer/` — Overlay files injected into the initramfs:
+- `rootfs-simple/` — Overlay files for the simple UKI build:
+  - `init` — Custom init script (mounts filesystems, DHCP, runs fdo-endpoint)
+  - `etc/fdo/config_generic.yaml` — Endpoint FSIM config (sysconfig, payload handlers)
+- `rootfs-installer/` — Overlay files for the installer UKI build:
   - `etc/fdo/config.yaml` — Endpoint FSIM config (payload destinations, MIME handlers)
   - `scripts/casper-premount/20fdo-receive` — FDO onboarding hook (keygen, TO2, ISO streaming)
   - `scripts/casper-bottom/62fdo-autoinstall` — Copies autoinstall into live root

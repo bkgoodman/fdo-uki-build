@@ -9,8 +9,16 @@ ASSET_DIR="$REPO_DIR/assets"
 BUILD_DIR="$REPO_DIR/build-installer"
 ISO_PATH="$ASSET_DIR/$UBUNTU_ISO_NAME"
 UKI_OUTPUT="$REPO_DIR/firmware/$INSTALLER_UKI_NAME"
-ENDPOINT_REPO="${ENDPOINT_REPO:-/home/bradgoodman/go-fdo-endpoint}"
-GO_ROOT="${GO_ROOT:-/home/bradgoodman/go}"
+ENDPOINT_REPO="${ENDPOINT_REPO:-$REPO_DIR/../go-fdo-endpoint}"
+if [ -z "${GO_ROOT:-}" ]; then
+    GO_BIN=$(command -v go 2>/dev/null || true)
+    if [ -n "$GO_BIN" ]; then
+        GO_ROOT=$("$GO_BIN" env GOROOT)
+    else
+        echo "ERROR: Go not found. Set GO_ROOT or add go to PATH." >&2
+        exit 1
+    fi
+fi
 EFI_STUB="${EFI_STUB:-/usr/lib/systemd/boot/efi/linuxx64.efi.stub}"
 MOUNT_DIR="$BUILD_DIR/iso"
 ROOTFS_DIR="$BUILD_DIR/rootfs"
@@ -104,8 +112,9 @@ sha256sum "$ISO_PATH" "$KERNEL" "$ORIGINAL_INITRD" "$MODIFIED_INITRD" "$UKI_OUTP
 echo "Command line: $(cat "$CMDLINE_FILE")"
 ls -lh "$ISO_PATH" "$KERNEL" "$ORIGINAL_INITRD" "$MODIFIED_INITRD" "$UKI_OUTPUT"
 
-if [ "${DEPLOY:-0}" = "1" ]; then
-    ssh "$REMOTE_HOST" "mkdir -p '$REMOTE_FIRMWARE_DIR'"
-    scp "$UKI_OUTPUT" "$REMOTE_HOST:$REMOTE_FIRMWARE_DIR/$INSTALLER_UKI_NAME"
-    scp "$ISO_PATH" "$REMOTE_HOST:$REMOTE_FIRMWARE_DIR/$UBUNTU_ISO_NAME"
+if [ "${DEPLOY:-0}" = "1" ] && [ -n "${DEPLOY_HOST:-}" ]; then
+    echo "=== Deploying to $DEPLOY_HOST ==="
+    ssh "$DEPLOY_HOST" "mkdir -p '$DEPLOY_FIRMWARE_DIR'"
+    scp "$UKI_OUTPUT" "$DEPLOY_HOST:$DEPLOY_FIRMWARE_DIR/$INSTALLER_UKI_NAME"
+    scp "$ISO_PATH" "$DEPLOY_HOST:$DEPLOY_FIRMWARE_DIR/$UBUNTU_ISO_NAME"
 fi

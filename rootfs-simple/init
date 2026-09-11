@@ -1,0 +1,85 @@
+#!/bin/sh
+# Minimal init for FDO BMO Ubuntu UKI - Stage 2
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+echo "FDO BMO: Initializing..."
+
+# Mount essential filesystems
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs udev /dev
+mkdir -p /dev/pts /run /tmp
+mount -t devpts devpts /dev/pts
+mount -t tmpfs tmpfs /run
+mount -t tmpfs tmpfs /tmp
+
+# Load essential modules
+echo "FDO BMO: Loading modules..."
+modprobe virtio_net 2>/dev/null
+modprobe virtio_pci 2>/dev/null
+
+# Start udev for device discovery
+if [ -x /usr/lib/systemd/systemd-udevd ]; then
+    /usr/lib/systemd/systemd-udevd --daemon 2>/dev/null
+    udevadm trigger --action=add 2>/dev/null
+    udevadm settle --timeout=10 2>/dev/null
+fi
+
+# Configure networking via DHCP
+echo "FDO BMO: Configuring network..."
+for iface in /sys/class/net/e*; do
+    iface=$(basename "$iface")
+    ip link set "$iface" up 2>/dev/null
+done
+sleep 2
+
+# Try dhcpcd or busybox udhcpc
+if command -v dhcpcd >/dev/null 2>&1; then
+    dhcpcd --oneshot --waitip 2>/dev/null
+elif command -v udhcpc >/dev/null 2>&1; then
+    udhcpc -i eth0 -q 2>/dev/null
+fi
+
+echo ""
+echo "=== FDO BMO Ubuntu UKI Booted - Stage 1 Complete ==="
+echo "Kernel: $(uname -r)"
+echo "Network:"
+ip addr show 2>/dev/null | grep "inet " || echo "  no IP"
+echo ""
+
+# Wait for TPM device
+echo "FDO BMO: Waiting for TPM device..."
+TRIES=0
+while [ ! -e /dev/tpmrm0 ] && [ $TRIES -lt 10 ]; do
+    sleep 1
+    TRIES=$((TRIES + 1))
+done
+
+if [ -e /dev/tpmrm0 ]; then
+    echo "TPM: /dev/tpmrm0 ready"
+else
+    echo "WARNING: /dev/tpmrm0 not found after 10s"
+fi
+
+# Stage 2: Run go-fdo-endpoint
+if [ -x /usr/local/bin/fdo-endpoint ]; then
+    echo ""
+    echo "=== Stage 2: Running FDO Endpoint Client ==="
+    echo "Config: /etc/fdo/config_generic.yaml"
+    echo ""
+
+    # Create payload temp dir
+    mkdir -p /tmp/fdo_payloads
+
+    # Run TO1 -> TO2 (proper FDO flow)
+    cd /etc/fdo
+    /usr/local/bin/fdo-endpoint -config /etc/fdo/config_generic.yaml 2>&1
+    FDO_EXIT=$?
+
+    echo ""
+    echo "=== FDO Endpoint exited with code $FDO_EXIT ==="
+fi
+
+echo ""
+echo "Dropping to shell..."
+exec /bin/sh
