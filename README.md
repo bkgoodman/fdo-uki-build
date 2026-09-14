@@ -1,6 +1,35 @@
 # FDO UKI Build Pipeline
 
-This repository contains the build pipeline for creating Ubuntu UKI (Unified Kernel Image) with FDO Stage 2 support.
+Zero-touch Ubuntu provisioning using FIDO Device Onboard (FDO) and Unified Kernel Images (UKI).
+
+![FDO UKI Architecture](doc/fdo-uki-architecture.svg)
+
+## How It Works
+
+This pipeline solves the problem of securely onboarding a bare-metal device with no pre-installed OS, no bootloader, and no trusted network — using only UEFI firmware and a TPM.
+
+**Build time:** We crack open a standard vendor Ubuntu ISO, extract its kernel and initramfs, inject an FDO device agent ([go-fdo-endpoint](../go-fdo-endpoint)) and casper hooks into the initramfs, and reassemble everything into a single EFI binary (UKI) using `objcopy`. The original ISO is kept intact as a separate asset. In the future, the OS vendor (e.g. Canonical) would supply the UKI and ISO directly — end users would never need to run this build pipeline.
+
+**Server setup:** The FDO server ([go-fdo](../go-fdo)) is loaded with four things, each serving a different role:
+
+| Asset | Scope | Source | FSIM |
+|-------|-------|--------|------|
+| **UKI** | Static — same for all devices | OS vendor (or build pipeline) | BMO |
+| **Full vendor ISO** | Static — same for all devices | OS vendor (or build pipeline) | Payload |
+| **Autoinstall YAML** | Per-device — machine-specific config | Operator-specified | Payload |
+| **Ownership Voucher** | Per-device — device identity | Device manufacturing (DI) | FDO protocol |
+
+SSH host keys are not loaded onto the server — they are **negotiated automatically** during onboarding via the Credentials FSIM. The server stores them for later verification.
+
+**Device onboarding** happens in three stages with no manual intervention:
+
+1. **Stage 1 (UEFI):** The device's UEFI FDO client ([fdo-uefi-rs](../fdo-uefi-rs)) presents its Ownership Voucher, authenticates via TPM, runs FDO TO2, and receives the UKI via **BMO FSIM** (Bare Metal Onboarding). It chainloads the UKI into Linux.
+
+2. **Stage 2 (Linux/initrd):** The go-fdo-endpoint in the UKI's initramfs generates SSH host keys, then runs FDO TO2 (credential reuse). The server delivers the autoinstall YAML and streams the full ISO to `/dev/pmem0` via **Payload FSIM**. The endpoint sends the SSH host keys and device IP back to the server via **Credentials FSIM**.
+
+3. **Stage 3 (Install):** Casper (Ubuntu's live boot system) finds the ISO on `/dev/pmem0`, mounts the squashfs, and hands off to Subiquity for unattended installation. Late-commands copy the FDO-generated SSH keys to the installed system and prevent cloud-init from regenerating them.
+
+**Result:** A fully installed Ubuntu system whose SSH host keys were generated during onboarding and registered with the FDO server — eliminating the Trust On First Use (TOFU) problem. The operator can verify the device's identity on first SSH connection.
 
 See [TEST-UBUNTU-UKI.md](TEST-UBUNTU-UKI.md) for verified flows and [TODO-UBUNTU-UKI.md](TODO-UBUNTU-UKI.md) for phased installer work.
 

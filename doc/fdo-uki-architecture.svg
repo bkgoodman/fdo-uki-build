@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 1300" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,3 L0,6z" fill="#555"/>
+    </marker>
+    <marker id="arr-blue" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,3 L0,6z" fill="#1565c0"/>
+    </marker>
+    <marker id="arr-amber" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,3 L0,6z" fill="#f57f17"/>
+    </marker>
+    <marker id="arr-purple" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,3 L0,6z" fill="#6a1b9a"/>
+    </marker>
+    <marker id="arr-teal" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,3 L0,6z" fill="#00897b"/>
+    </marker>
+  </defs>
+
+  <!-- ════════════════ BUILD-TIME PREPARATION ════════════════ -->
+  <rect x="10" y="10" width="900" height="345" rx="14" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="460" y="38" text-anchor="middle" font-size="14" font-weight="bold" fill="#424242" letter-spacing="1">BUILD-TIME PREPARATION</text>
+  <text x="460" y="54" text-anchor="middle" font-size="10" fill="#888" font-style="italic">Future vision: OS vendor supplies UKI + ISO directly; users skip this step</text>
+
+  <!-- Vendor ISO input — CORAL (contains kernel + initrd) -->
+  <rect x="40" y="65" width="250" height="90" rx="8" fill="#fce4ec" stroke="#e57373" stroke-width="1.5"/>
+  <text x="165" y="90" text-anchor="middle" font-size="13" font-weight="bold" fill="#c62828">Vendor Ubuntu ISO</text>
+  <text x="165" y="108" text-anchor="middle" font-size="11" fill="#666">contains kernel, initrd,</text>
+  <text x="165" y="124" text-anchor="middle" font-size="11" fill="#666">and rootfs (squashfs)</text>
+  <text x="165" y="143" text-anchor="middle" font-size="10" fill="#999">~2.7 GiB</text>
+
+  <!-- go-fdo-endpoint input — TEAL -->
+  <rect x="620" y="65" width="260" height="90" rx="8" fill="#e0f2f1" stroke="#00897b" stroke-width="1.5"/>
+  <text x="750" y="90" text-anchor="middle" font-size="13" font-weight="bold" fill="#00695c">go-fdo-endpoint</text>
+  <text x="750" y="108" text-anchor="middle" font-size="11" fill="#666">+ casper premount hook</text>
+  <text x="750" y="124" text-anchor="middle" font-size="11" fill="#666">+ SSH keygen script</text>
+  <text x="750" y="143" text-anchor="middle" font-size="11" fill="#666">+ FDO config (FSIM handlers)</text>
+
+  <!-- Arrow: ISO -> extract -->
+  <line x1="165" y1="155" x2="165" y2="183" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="190" y="174" font-size="10" fill="#555">extract</text>
+
+  <!-- Kernel box — CORAL -->
+  <rect x="60" y="188" width="95" height="34" rx="5" fill="#ffcdd2" stroke="#e57373" stroke-width="1.5"/>
+  <text x="107" y="210" text-anchor="middle" font-size="11" font-weight="bold" fill="#c62828">kernel</text>
+
+  <!-- Initrd box — CORAL with TEAL accent (endpoint is injected) -->
+  <rect x="175" y="188" width="95" height="34" rx="5" fill="#ffcdd2" stroke="#e57373" stroke-width="1.5"/>
+  <text x="222" y="204" text-anchor="middle" font-size="11" font-weight="bold" fill="#c62828">initrd</text>
+  <!-- Small teal indicator showing endpoint was injected -->
+  <rect x="240" y="210" width="26" height="10" rx="3" fill="#e0f2f1" stroke="#00897b" stroke-width="0.8"/>
+  <text x="253" y="218" text-anchor="middle" font-size="6" fill="#00695c">+ep</text>
+
+  <!-- Arrow: endpoint -> inject into initrd (points LEFT into initrd right edge) -->
+  <path d="M 750,155 L 750,198 Q 750,205 740,205 L 272,205" stroke="#00897b" stroke-width="1.5" fill="none" marker-end="url(#arr-teal)"/>
+  <text x="500" y="198" text-anchor="middle" font-size="10" fill="#00897b" font-weight="bold">inject into initrd</text>
+
+  <!-- Arrow: kernel+initrd -> objcopy -->
+  <line x1="165" y1="222" x2="165" y2="248" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- objcopy box -->
+  <rect x="40" y="252" width="370" height="35" rx="6" fill="#e0e0e0" stroke="#9e9e9e" stroke-width="1.5"/>
+  <text x="225" y="274" text-anchor="middle" font-size="12" font-weight="bold" fill="#424242">objcopy:  EFI stub + kernel + modified initrd</text>
+
+  <!-- Arrow: objcopy -> UKI output -->
+  <line x1="100" y1="287" x2="100" y2="306" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Build output: UKI — BLUE (delivery color) -->
+  <rect x="35" y="310" width="130" height="35" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="100" y="333" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565c0">UKI (.efi)</text>
+
+  <!-- Build output: Full ISO — BLUE (delivery color) -->
+  <rect x="180" y="310" width="130" height="35" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="245" y="328" text-anchor="middle" font-size="11" font-weight="bold" fill="#1565c0">Full Vendor ISO</text>
+  <text x="245" y="341" text-anchor="middle" font-size="9" fill="#1565c0">(kept intact)</text>
+
+  <!-- Dashed line: Vendor ISO -> Full ISO output (same file) -->
+  <path d="M 265,155 L 315,155 L 315,327 L 312,327" stroke="#999" stroke-width="1" stroke-dasharray="4,3" fill="none" marker-end="url(#arr)"/>
+  <text x="325" y="245" font-size="9" fill="#999" transform="rotate(90,325,245)">same file</text>
+
+  <!-- ════════════════ ARROWS INTO SERVER ════════════════ -->
+
+  <!-- BLUE: UKI -> server (straight down) -->
+  <line x1="100" y1="345" x2="100" y2="488" stroke="#1565c0" stroke-width="2" marker-end="url(#arr-blue)"/>
+  <!-- BLUE: Full ISO -> server (straight down) -->
+  <line x1="245" y1="345" x2="240" y2="488" stroke="#1565c0" stroke-width="2" marker-end="url(#arr-blue)"/>
+  <!-- AMBER: Autoinstall -> server (from user) -->
+  <line x1="394" y1="387" x2="394" y2="488" stroke="#f57f17" stroke-width="2" marker-end="url(#arr-amber)"/>
+  <text x="394" y="378" text-anchor="middle" font-size="10" font-weight="bold" fill="#f57f17">from user / operator</text>
+  <!-- AMBER: OV -> server (from device vendor) -->
+  <line x1="526" y1="387" x2="526" y2="488" stroke="#f57f17" stroke-width="2" marker-end="url(#arr-amber)"/>
+  <text x="526" y="378" text-anchor="middle" font-size="10" font-weight="bold" fill="#f57f17">from device vendor</text>
+
+  <!-- ════════════════ FDO SERVER ════════════════ -->
+  <rect x="10" y="403" width="900" height="192" rx="14" fill="#e8f5e9" stroke="#81c784" stroke-width="1.5"/>
+  <text x="460" y="425" text-anchor="middle" font-size="14" font-weight="bold" fill="#2e7d32" letter-spacing="1">FDO SERVER (go-fdo)</text>
+
+  <!-- ── Column 1: Static OS Image (BLUE) ── -->
+  <rect x="25" y="435" width="285" height="150" rx="8" fill="#e3f2fd" stroke="#90caf9" stroke-width="1"/>
+  <text x="167" y="453" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565c0">Static OS Image</text>
+  <text x="167" y="467" text-anchor="middle" font-size="9" fill="#555">Same for all devices of this type</text>
+  <text x="167" y="480" text-anchor="middle" font-size="9" fill="#888" font-style="italic">Future: supplied by OS vendor directly</text>
+
+  <rect x="38" y="490" width="125" height="50" rx="5" fill="#fff" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="100" y="510" text-anchor="middle" font-size="11" font-weight="bold" fill="#1565c0">UKI</text>
+  <text x="100" y="526" text-anchor="middle" font-size="9" font-weight="bold" fill="#1565c0">BMO FSIM</text>
+
+  <rect x="173" y="490" width="125" height="50" rx="5" fill="#fff" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="240" y="510" text-anchor="middle" font-size="11" font-weight="bold" fill="#1565c0">Full ISO</text>
+  <text x="240" y="526" text-anchor="middle" font-size="9" font-weight="bold" fill="#1565c0">Payload FSIM</text>
+
+  <text x="100" y="565" text-anchor="middle" font-size="8" fill="#1565c0">&#x2193; delivers to Stage 1</text>
+  <text x="240" y="565" text-anchor="middle" font-size="8" fill="#1565c0">&#x2193; delivers to Stage 2</text>
+
+  <!-- ── Column 2: Per-Device (AMBER) ── -->
+  <rect x="320" y="435" width="280" height="150" rx="8" fill="#fff8e1" stroke="#ffe082" stroke-width="1"/>
+  <text x="460" y="453" text-anchor="middle" font-size="12" font-weight="bold" fill="#f57f17">Per-Device</text>
+  <text x="460" y="467" text-anchor="middle" font-size="9" fill="#555">Specific to each device being onboarded</text>
+
+  <rect x="333" y="490" width="122" height="50" rx="5" fill="#fff" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="394" y="505" text-anchor="middle" font-size="10" font-weight="bold" fill="#f57f17">Autoinstall</text>
+  <text x="394" y="518" text-anchor="middle" font-size="10" font-weight="bold" fill="#f57f17">YAML</text>
+  <text x="394" y="531" text-anchor="middle" font-size="8" fill="#f57f17">Payload FSIM</text>
+
+  <rect x="465" y="490" width="122" height="50" rx="5" fill="#fff" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="526" y="505" text-anchor="middle" font-size="10" font-weight="bold" fill="#f57f17">Ownership</text>
+  <text x="526" y="518" text-anchor="middle" font-size="10" font-weight="bold" fill="#f57f17">Voucher</text>
+  <text x="526" y="531" text-anchor="middle" font-size="8" fill="#f57f17">FDO protocol</text>
+
+  <text x="394" y="565" text-anchor="middle" font-size="8" fill="#f57f17">&#x2193; delivers to Stage 2</text>
+  <text x="526" y="565" text-anchor="middle" font-size="8" fill="#f57f17">&#x2193; used in Stage 1</text>
+
+  <!-- ── Column 3: Negotiated State (PURPLE) ── -->
+  <rect x="610" y="435" width="280" height="150" rx="8" fill="#f3e5f5" stroke="#ce93d8" stroke-width="1"/>
+  <text x="750" y="453" text-anchor="middle" font-size="12" font-weight="bold" fill="#6a1b9a">Negotiated State</text>
+  <text x="750" y="467" text-anchor="middle" font-size="9" fill="#555">Automatic &#x2014; not user-specified</text>
+  <text x="750" y="480" text-anchor="middle" font-size="9" fill="#888" font-style="italic">Exchanged during onboarding protocol</text>
+
+  <rect x="635" y="490" width="230" height="50" rx="5" fill="#fff" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="750" y="510" text-anchor="middle" font-size="11" font-weight="bold" fill="#6a1b9a">SSH Key Store</text>
+  <text x="750" y="526" text-anchor="middle" font-size="9" font-weight="bold" fill="#6a1b9a">Credentials FSIM</text>
+
+  <text x="750" y="565" text-anchor="middle" font-size="8" fill="#6a1b9a">&#x2191; received from Stage 2</text>
+
+  <!-- ════════════════ DEVICE ONBOARDING ════════════════ -->
+  <rect x="10" y="615" width="900" height="615" rx="14" fill="#fafafa" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="460" y="641" text-anchor="middle" font-size="14" font-weight="bold" fill="#424242" letter-spacing="1">DEVICE ONBOARDING</text>
+
+  <!-- ──── Stage 1 ──── -->
+  <rect x="40" y="655" width="840" height="90" rx="10" fill="#fff" stroke="#bdbdbd" stroke-width="1.5"/>
+  <rect x="41" y="656" width="838" height="22" rx="9" fill="#eee"/>
+  <text x="60" y="672" font-size="13" font-weight="bold" fill="#424242">Stage 1: UEFI Boot</text>
+  <text x="265" y="672" font-size="11" fill="#888">(fdo-uefi-rs)</text>
+
+  <text x="60" y="698" font-size="11" fill="#333">UEFI FDO client presents Ownership Voucher, authenticates with TPM credential, runs TO2</text>
+  <!-- BMO FSIM box — BLUE (matches UKI) -->
+  <rect x="60" y="706" width="370" height="26" rx="5" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="70" y="724" font-size="11" font-weight="bold" fill="#1565c0">&#x2190; BMO FSIM: Server delivers UKI (106 MB, ~1700 rounds)</text>
+  <text x="460" y="724" font-size="11" fill="#333">UEFI client chainloads UKI via LoadImage / StartImage</text>
+
+  <!-- Arrow Stage 1 -> Stage 2 -->
+  <line x1="460" y1="745" x2="460" y2="768" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="478" y="761" font-size="10" fill="#555">chainload</text>
+
+  <!-- ──── Stage 2: CORAL outer (this IS the initrd) ──── -->
+  <rect x="40" y="773" width="840" height="239" rx="10" fill="#fce4ec" stroke="#e57373" stroke-width="2"/>
+  <!-- Header band — CORAL -->
+  <rect x="41" y="774" width="838" height="22" rx="9" fill="#ffcdd2"/>
+  <text x="60" y="790" font-size="13" font-weight="bold" fill="#c62828">Stage 2: UKI Linux Boot</text>
+  <text x="305" y="790" font-size="11" fill="#c62828" font-style="italic">&#x2190; this IS the initrd + kernel from build above</text>
+
+  <text x="60" y="812" font-size="11" fill="#333">Kernel boots, initrd mounts as root filesystem. Casper premount hook triggers:</text>
+
+  <!-- ──── go-fdo-endpoint inner box — TEAL (same app injected during build) ──── -->
+  <rect x="60" y="822" width="800" height="176" rx="8" fill="#e0f2f1" stroke="#00897b" stroke-width="2"/>
+  <!-- Inner header band — TEAL -->
+  <rect x="61" y="823" width="798" height="20" rx="7" fill="#b2dfdb"/>
+  <text x="80" y="838" font-size="12" font-weight="bold" fill="#00695c">go-fdo-endpoint</text>
+  <text x="250" y="838" font-size="10" fill="#00897b" font-style="italic">&#x2190; same binary injected into initrd during build</text>
+
+  <text x="80" y="860" font-size="11" fill="#333">1. Generate SSH host keys (ed25519, ecdsa, rsa) using Go crypto stdlib</text>
+  <text x="80" y="876" font-size="11" fill="#333">2. Capture device IP address</text>
+  <text x="80" y="892" font-size="11" fill="#333">3. Run FDO TO2 (credential reuse from Stage 1):</text>
+
+  <!-- Payload autoinstall — AMBER (matches Autoinstall YAML) -->
+  <rect x="100" y="900" width="380" height="26" rx="5" fill="#fff8e1" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="110" y="918" font-size="11" font-weight="bold" fill="#f57f17">&#x2190; Payload FSIM: autoinstall YAML delivered</text>
+
+  <!-- Payload ISO — BLUE (matches Full ISO) -->
+  <rect x="100" y="932" width="410" height="26" rx="5" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="110" y="950" font-size="11" font-weight="bold" fill="#1565c0">&#x2190; Payload FSIM: full ISO (2.7 GiB) &#x2192; /dev/pmem0</text>
+
+  <!-- Credentials — PURPLE (matches SSH Key Store) -->
+  <rect x="520" y="900" width="320" height="26" rx="5" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="530" y="918" font-size="11" font-weight="bold" fill="#6a1b9a">&#x2192; Credentials FSIM: SSH keys + IP to server</text>
+
+  <text x="440" y="980" text-anchor="middle" font-size="9" fill="#888">&#x2190; = server to device          &#x2192; = device to server</text>
+
+  <!-- Arrow Stage 2 -> Stage 3 -->
+  <line x1="460" y1="1012" x2="460" y2="1037" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ──── Stage 3 ──── -->
+  <rect x="40" y="1042" width="840" height="88" rx="10" fill="#fff" stroke="#bdbdbd" stroke-width="1.5"/>
+  <rect x="41" y="1043" width="838" height="22" rx="9" fill="#eee"/>
+  <text x="60" y="1059" font-size="13" font-weight="bold" fill="#424242">Stage 3: OS Installation</text>
+  <text x="285" y="1059" font-size="11" fill="#888">(casper + Subiquity, no FDO involvement)</text>
+
+  <text x="60" y="1085" font-size="11" fill="#333">Casper finds ISO9660 on /dev/pmem0, mounts squashfs layers, constructs live root</text>
+  <text x="60" y="1103" font-size="11" fill="#333">Subiquity reads autoinstall YAML, runs unattended installation (partitioning, extract, curthooks)</text>
+  <text x="60" y="1121" font-size="11" fill="#333">Late-commands: copy SSH host keys to installed system, write cloud-init drop-in to prevent key regeneration</text>
+
+  <!-- Arrow Stage 3 -> Result -->
+  <line x1="460" y1="1130" x2="460" y2="1150" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ──── Result ──── -->
+  <rect x="140" y="1155" width="640" height="68" rx="10" fill="#e8f5e9" stroke="#43a047" stroke-width="2"/>
+  <text x="460" y="1181" text-anchor="middle" font-size="14" font-weight="bold" fill="#2e7d32">Installed Ubuntu</text>
+  <text x="460" y="1200" text-anchor="middle" font-size="11" fill="#333">FDO-provisioned SSH host keys (no TOFU)  &#x2022;  System configured via autoinstall</text>
+  <text x="460" y="1216" text-anchor="middle" font-size="11" fill="#333">Server holds device SSH public keys for verified first connection</text>
+
+  <!-- ════════════════ COLORED TRACE LINES ════════════════ -->
+  <!-- Drawn last so they render on top of backgrounds -->
+
+  <!-- BLUE: Server UKI → Stage 1 BMO (left margin, x=20) -->
+  <path d="M 100,540 L 100,600 L 20,600 L 20,719 L 58,719"
+        stroke="#1565c0" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-blue)"/>
+  <text x="16" y="660" font-size="8" font-weight="bold" fill="#1565c0" transform="rotate(-90,16,660)">UKI via BMO</text>
+
+  <!-- BLUE: Server ISO → Stage 2 Payload ISO (left margin, x=30, dashed) -->
+  <path d="M 240,540 L 240,604 L 30,604 L 30,945 L 98,945"
+        stroke="#1565c0" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8,4" marker-end="url(#arr-blue)"/>
+  <text x="26" y="800" font-size="8" font-weight="bold" fill="#1565c0" transform="rotate(-90,26,800)">ISO via Payload</text>
+
+  <!-- AMBER: Server Autoinstall → Stage 2 Payload autoinstall (left margin, x=38) -->
+  <path d="M 333,515 L 38,515 L 38,913 L 98,913"
+        stroke="#f57f17" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-amber)"/>
+  <text x="34" y="740" font-size="8" font-weight="bold" fill="#f57f17" transform="rotate(-90,34,740)">Config via Payload</text>
+
+  <!-- PURPLE: Stage 2 Credentials → Server SSH Store (right margin, x=900) -->
+  <path d="M 842,913 L 900,913 L 900,515 L 867,515"
+        stroke="#6a1b9a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-purple)"/>
+  <text x="896" y="740" font-size="8" font-weight="bold" fill="#6a1b9a" transform="rotate(90,896,740)">SSH via Credentials</text>
+
+  <!-- ════════════════ COLOR LEGEND ════════════════ -->
+  <rect x="20" y="1245" width="880" height="40" rx="6" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+
+  <!-- Row 1: Component origin colors -->
+  <rect x="35" y="1250" width="12" height="12" rx="2" fill="#ffcdd2" stroke="#e57373" stroke-width="1"/>
+  <text x="52" y="1261" font-size="9" font-weight="bold" fill="#555">initrd / kernel</text>
+  <text x="143" y="1261" font-size="8" fill="#888">(from vendor ISO)</text>
+
+  <rect x="255" y="1250" width="12" height="12" rx="2" fill="#e0f2f1" stroke="#00897b" stroke-width="1"/>
+  <text x="272" y="1261" font-size="9" font-weight="bold" fill="#555">go-fdo-endpoint</text>
+  <text x="370" y="1261" font-size="8" fill="#888">(injected into initrd)</text>
+
+  <!-- Row 2: Delivery/FSIM colors -->
+  <rect x="35" y="1268" width="12" height="12" rx="2" fill="#e3f2fd" stroke="#1565c0" stroke-width="1"/>
+  <text x="52" y="1279" font-size="9" font-weight="bold" fill="#555">Static OS Image</text>
+  <text x="140" y="1279" font-size="8" fill="#888">(UKI + ISO delivery)</text>
+
+  <rect x="255" y="1268" width="12" height="12" rx="2" fill="#fff8e1" stroke="#f57f17" stroke-width="1"/>
+  <text x="272" y="1279" font-size="9" font-weight="bold" fill="#555">Per-Device</text>
+  <text x="334" y="1279" font-size="8" fill="#888">(Autoinstall + OV)</text>
+
+  <rect x="460" y="1268" width="12" height="12" rx="2" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1"/>
+  <text x="477" y="1279" font-size="9" font-weight="bold" fill="#555">Negotiated</text>
+  <text x="534" y="1279" font-size="8" fill="#888">(SSH Keys)</text>
+
+</svg>
