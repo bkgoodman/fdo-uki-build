@@ -17,19 +17,38 @@ esac
 . /scripts/functions
 
 log_begin_msg "Preparing FDO installer payload reception"
+echo "FDO-DIAG: 20fdo-receive starting" >&2
 
+echo "FDO-DIAG: loading nvdimm/pmem modules" >&2
 modprobe libnvdimm 2>/dev/null || true
 modprobe nd_pmem 2>/dev/null || true
 modprobe isofs 2>/dev/null || true
+echo "FDO-DIAG: udevadm settle (30s timeout)" >&2
 udevadm settle --timeout=30 2>/dev/null || true
+echo "FDO-DIAG: udevadm settle done" >&2
 
+echo "FDO-DIAG: listing NICs before configure_networking:" >&2
+ls /sys/class/net/ 2>/dev/null >&2
+for iface in /sys/class/net/e*; do
+    name=$(basename "$iface")
+    carrier=$(cat "$iface/carrier" 2>/dev/null || echo "?")
+    echo "FDO-DIAG:   $name carrier=$carrier" >&2
+done
+
+echo "FDO-DIAG: calling configure_networking..." >&2
 configure_networking
+echo "FDO-DIAG: configure_networking returned" >&2
 
+echo "FDO-DIAG: IP addresses:" >&2
+ip -4 -o addr show scope global 2>/dev/null >&2 || true
+
+echo "FDO-DIAG: waiting for /dev/tpmrm0 and /dev/pmem0" >&2
 tries=0
 while { [ ! -e /dev/tpmrm0 ] || [ ! -e /dev/pmem0 ]; } && [ "$tries" -lt 30 ]; do
     sleep 1
     tries=$((tries + 1))
 done
+echo "FDO-DIAG: wait done (tries=$tries), tpmrm0=$(ls /dev/tpmrm0 2>/dev/null), pmem0=$(ls /dev/pmem0 2>/dev/null)" >&2
 
 if [ ! -e /dev/tpmrm0 ]; then
     echo "FDO installer error: /dev/tpmrm0 is unavailable" >&2
@@ -58,7 +77,11 @@ fi
 ip -4 -o addr show scope global 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -1 > /run/fdo/device-ip.txt
 echo "FDO installer: device IP address: $(cat /run/fdo/device-ip.txt)"
 
-/usr/local/bin/fdo-endpoint -config /etc/fdo/config.yaml -to2 http://10.0.2.2:8080
+# Run TO2 using the RV/owner address from the TPM credential (set during DI).
+# No hardcoded server address — the endpoint reads RvInfo from the DCTPM NV
+# index and contacts the rendezvous/owner server discovered there.
+echo "FDO installer: starting TO2 (server address from TPM credential)"
+/usr/local/bin/fdo-endpoint -config /etc/fdo/config.yaml
 status=$?
 if [ "$status" -ne 0 ]; then
     echo "FDO installer error: endpoint exited with status $status" >&2

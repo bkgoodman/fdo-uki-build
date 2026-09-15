@@ -3,7 +3,7 @@ debug: false
 fdo_version: 200
 
 di:
-  url: "http://10.0.2.2:8080"
+  url: ""  # DI is not performed from the UKI; URL comes from the EFI client's DI phase
   key: "ec256"
   key_enc: "x509"
 

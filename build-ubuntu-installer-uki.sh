@@ -20,6 +20,7 @@ if [ -z "${GO_ROOT:-}" ]; then
     fi
 fi
 EFI_STUB="${EFI_STUB:-/usr/lib/systemd/boot/efi/linuxx64.efi.stub}"
+
 MOUNT_DIR="$BUILD_DIR/iso"
 ROOTFS_DIR="$BUILD_DIR/rootfs"
 ORIGINAL_INITRD="$BUILD_DIR/initrd.original"
@@ -75,6 +76,8 @@ sed -i '/20iso_scan/i /scripts/casper-premount/20fdo-receive "$@"' "$MAIN_ROOT/s
 sed -i '/99casperboot/i /scripts/casper-bottom/62fdo-autoinstall "$@"' "$MAIN_ROOT/scripts/casper-bottom/ORDER"
 chmod 0755 "$MAIN_ROOT/scripts/casper-premount/20fdo-receive" "$MAIN_ROOT/scripts/casper-bottom/62fdo-autoinstall" "$MAIN_ROOT/scripts/generate-ssh-host-keys.sh" "$MAIN_ROOT/usr/local/bin/fdo-endpoint"
 
+
+
 : > "$MODIFIED_INITRD"
 for archive in early early2; do
     if [ -d "$ROOTFS_DIR/$archive" ]; then
@@ -91,7 +94,7 @@ done
 
 requested_mib=$(((UBUNTU_ISO_SIZE + 1024 * 1024 - 1) / 1024 / 1024))
 requested_mib=$(((requested_mib + 3) & ~3))
-printf 'boot=casper ip=dhcp live-media=/dev/pmem0 memmap=%sM!4G nokaslr autoinstall subiquity.autoinstallpath=/autoinstall.yaml console=tty0 console=ttyS0' "$requested_mib" > "$CMDLINE_FILE"
+printf 'boot=casper ip=dhcp live-media=/dev/pmem0 memmap=%sM!4G nokaslr autoinstall subiquity.autoinstallpath=/autoinstall.yaml console=ttyS0 console=tty0' "$requested_mib" > "$CMDLINE_FILE"
 
 linux_vma=$((0x2000000))
 linux_size=$(stat -c %s "$KERNEL")
