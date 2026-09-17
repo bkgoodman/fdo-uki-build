@@ -347,7 +347,43 @@ The `OnPublicKeyReceived` callback prints the received data to stdout:
   Key:  {"ssh_host_ed25519_key":"ssh-ed25519 AAAA...","ip_address":"10.0.2.15"} (length: 950 bytes)
 ```
 
-**Current limitation:** The server only logs the received keys to stdout (which ends up in `server.log`). There is no persistence — no database storage, no `known_hosts` file generation, no webhook. For testing, we extract the keys from `server.log` with `grep` to build a `known_hosts` file and verify the SSH connection. Production use would need the `OnPublicKeyReceived` callback to write to a database or known_hosts file.
+**Current limitation:** The server only logs the received keys to stdout (which ends up in `server.log`). There is no persistence -- no database storage, no `known_hosts` file generation, no webhook. For testing, we extract the keys from `server.log` with `grep` to build a `known_hosts` file and verify the SSH connection. Production use would need the `OnPublicKeyReceived` callback to write to a database or known_hosts file.
+
+### Connecting to an Onboarded Device
+
+After FDO onboarding completes, the server log contains the device's SSH host keys. To connect securely (proving you are talking to the machine that was onboarded, not an impostor):
+
+**1. Extract the host key from the server log:**
+
+```bash
+# Find the credentials registration in the server log
+grep -A5 'fdo.credentials.*Received public key' server.log.raw
+```
+
+This will show the JSON blob with `ssh_host_ed25519_key`, `ssh_host_ecdsa_key`, `ssh_host_rsa_key`, and `ip_address`.
+
+**2. Add the host key to known_hosts:**
+
+```bash
+# Remove any stale key for this IP (if reinstalled)
+ssh-keygen -f ~/.ssh/known_hosts -R <DEVICE_IP>
+
+# Add the FDO-received host key (use any of the three key types)
+echo "<DEVICE_IP> ecdsa-sha2-nistp256 AAAA..." >> ~/.ssh/known_hosts
+```
+
+**3. Connect with the onboarding key:**
+
+```bash
+ssh -i config/fdo-onboarding-key fdo@<DEVICE_IP>
+```
+
+If the connection succeeds without a host key warning, you have cryptographic proof that:
+- The device on the other end holds the private half of the host key
+- That host key was generated during FDO onboarding and transmitted through the authenticated TO2 channel
+- No TOFU -- the device identity was verified through the FDO ownership chain, not blind trust
+
+The `fdo-onboarding-key` (in `config/`) is the SSH user key whose public half is baked into the autoinstall YAML. Password auth is disabled (`allow-pw: false`).
 
 ### Key Technical Gotcha: FDO 2.0 Yield() vs Receive()
 
@@ -411,6 +447,33 @@ Located at `/etc/fdo/config_generic.yaml` in the initrd (simple UKI) or `/etc/fd
 - `-bmo` — Send UKI via BMO inline
 - `-sysconfig` — Send sysconfig parameters
 - `-payload` — Send file payloads
+- `-bmo-duration <seconds>` — Advisory estimated time for BMO image transfer+apply (see below)
+- `-payload-duration <seconds>` — Advisory estimated time for payload transfer+apply (see below)
+
+### Estimated Duration (Watchdog Advisory)
+
+Large payloads (e.g. a 2.8 GiB ISO image or a 106 MB UKI) can take a long time to transfer and apply over FDO ServiceInfo. Devices typically run internal watchdog timers during onboarding to recover from hangs. If a legitimate transfer exceeds the watchdog timeout, the device will reboot mid-transfer — a silent failure that looks like a hardware or network problem.
+
+The `-bmo-duration` and `-payload-duration` server flags let the operator specify an advisory `estimated_duration` (in seconds) that is sent to the device in the `payload-begin` / `image-begin` message. The device MAY use this to extend its watchdog accordingly (the reference fdo-uefi-rs client doubles the value for safety margin and re-arms only if the result exceeds its default timeout).
+
+**Who sets this value?** The estimate has two components:
+
+1. **Apply time** — how long the device takes to process the payload after receiving it (e.g. running an installer). The person who authors the payload knows this best.
+2. **Transfer time** — how long it takes to deliver the payload over the wire. This depends on payload size and link speed, which the sysadmin deploying the server knows best.
+
+The operator should add both together. For example, a 2.8 GiB ISO on a 100 Mbit/s link takes ~240s to transfer, plus ~300s for the Ubuntu installer to run — so `-payload-duration 540` would be reasonable. On a slower 10 Mbit/s link the same ISO takes ~2400s, so `-payload-duration 2700`.
+
+A value of 0 (the default) means "do not send this field" — the device uses its built-in default watchdog.
+
+**Example:**
+
+```bash
+# BMO stage: 106MB UKI, fast link, ~30s transfer + trivial chainload
+./fdo-server serve ... -bmo-duration 60
+
+# Payload stage: 2.8GB ISO, moderate link, ~5 min transfer + ~5 min install
+./fdo-server serve ... -payload-duration 600
+```
 
 ## Troubleshooting
 
