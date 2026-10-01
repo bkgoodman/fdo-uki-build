@@ -1,0 +1,25 @@
+[Unit]
+Description=FDO onboarding: receive kickstart and installer ISO
+DefaultDependencies=no
+# nm-wait-online-initrd.service (dracut network-manager module) is itself
+# Before=dracut-initqueue.service, so we slot in between network-up and the
+# initqueue main loop where Anaconda's anaconda-diskroot consumes /dev/pmem0.
+Wants=network-online.target
+After=network-online.target nm-wait-online-initrd.service systemd-udev-trigger.service dracut-pre-trigger.service
+Before=dracut-initqueue.service
+OnFailure=emergency.target
+OnFailureJobMode=isolate
+ConditionPathExists=/etc/initrd-release
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+TimeoutStartSec=infinity
+Environment=DRACUT_SYSTEMD=1
+Environment=NEWROOT=/sysroot
+StandardOutput=journal+console
+StandardError=journal+console
+ExecStart=/usr/libexec/fdo/fdo-receive.sh
+
+[Install]
+WantedBy=initrd.target

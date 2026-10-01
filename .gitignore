@@ -1,6 +1,7 @@
 assets/
 build/
 build-installer/
+build-fedora/
 firmware/
 golden/
 *.efi
