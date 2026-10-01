@@ -2,7 +2,7 @@
 
 Zero-touch Ubuntu provisioning using FIDO Device Onboard (FDO) and Unified Kernel Images (UKI).
 
-The same approach is also implemented for **Fedora** (Server DVD + Anaconda + kickstart) — see [Fedora Server Installer UKI](#fedora-server-installer-uki) for building, and [Theory of Operation: Fedora](#theory-of-operation-fedora-installer-uki) (with its own [architecture diagram](doc/fdo-uki-fedora-architecture.svg)) for the full walkthrough.
+The same approach is also implemented for **Fedora** (Server DVD + Anaconda + kickstart) — see [Fedora Server Installer UKI](#fedora-server-installer-uki) for building, and [Theory of Operation: Fedora](#theory-of-operation-fedora-installer-uki) (with its own [architecture diagram](doc/fdo-uki-fedora-architecture.svg)) for the full walkthrough. [Putting It All Together](#putting-it-all-together-a-fully-managed-edge-system) shows how either one extends to a fully managed edge system, once a management agent is included.
 
 ![FDO UKI Architecture](doc/fdo-uki-architecture.svg)
 
@@ -418,6 +418,55 @@ The timings come from the verified QEMU run (TCG, no KVM). See `TEST-FEDORA-UKI.
 7. **Install.** Anaconda runs the kickstart: `%pre` disk selection, package install from the DVD repo, and `%post` key copy and hardening. With `inst.text` the serial console stays quiet for the whole install, so watch VNC or wait for `reboot: Power down` (~77 min under TCG).
 8. **Result.** The VM powers off. The installed system boots to `fdo-installed login:` with the FDO-registered SSH host keys and SELinux enforcing.
 
+## Putting It All Together: A Fully Managed Edge System
+
+![Zero-touch to a fully managed edge system](doc/fdo-managed-edge.svg)
+
+The Ubuntu and Fedora diagrams above end at "installed OS". This diagram adds one more piece, and that piece turns the work into a complete, zero-touch path from bare metal to a **fully managed edge device**. It is a simplified view: the OS-specific detail is collapsed, but the colours, chips and trace lines mean the same thing as in the diagrams above.
+
+### The missing piece is the oldest one
+
+The FDO specification separates two things on each side (*FDO Entities and Entity Interconnection*):
+
+- **Owner:** the **Onboarding Service** (the FDO server) and the **Management Service (DMS)**, which is your existing control plane.
+- **Device:** the **ROE** (the FDO client) and the **Management Agent**.
+
+FDO's job is to bring the agent and the DMS together, which is step ⑥, "device in service". In the diagram, FDO pieces are blue and the existing management pieces are orange, as in the spec figure.
+
+Our multi-stage material describes FDO running at three layers: firmware (`fdo.bmo`), OS install (`fdo.sysconfig` / `fdo.payload`), and **applications** (`fdo.credentials`, "each app credentials itself to its own control plane"). The application layer is drawn last, but it was the **first** thing FDO was actually used for. A stand-alone management agent runs FDO to learn *where* its management plane is and *which credential* to use, then connects and takes orders: install, update, report telemetry, run workloads. That is plain FDO, with no BMO involved, and it is in use today. The catch is that someone still installs the agent by hand on an OS that someone installed by hand.
+
+BMO removes both manual steps. The installed OS now **includes the agent**, and the agent's own FDO session becomes the final phase of the same chain.
+
+### The phases
+
+Every phase runs its own FDO client with the **same TPM device credential** (DAK from factory DI; credential reuse keeps it valid). Each phase asks only for the FSIMs it understands, so the owner serves each item only to the phase that asks for it.
+
+| Phase | FDO client (ROE role) | Asks for | Receives / sends | Then |
+| --- | --- | --- | --- | --- |
+| 1. UEFI firmware | UEFI FDO module | `fdo.bmo` | ← UKI | verify hash, chainload |
+| 2. Installer (UKI) | go-fdo-endpoint in the initrd | `fdo.payload`, `fdo.credentials` | ← OS config, ← OS ISO (← agent package, optional); → SSH host keys | hand off to the stock installer |
+| 3. OS installation | *none* | — | — | install the OS **and the Management Agent**, enable it at boot |
+| 4. First boot | FDO client embedded in the agent | `fdo.credentials` | ← agent credential + DMS URL | agent connects to the DMS: ⑥ device in service |
+
+`fdo.credentials` appears twice, in opposite directions. In Phase 2 the device *registers* its SSH host keys with the owner (→). In Phase 4 the owner *provisions* the agent's credential to the device (←). Neither phase sees the other's data, and neither ever sees the UKI or the ISO.
+
+### Getting the agent onto the device
+
+Either option works, and both are ordinary OS configuration:
+
+- **In the OS image:** the agent package sits in the ISO's own repo (or a custom repo), and the kickstart or autoinstall installs and enables it. For Fedora that's a package in `%packages` plus `services --enabled=<agent>`. For Ubuntu it's a `packages:` entry plus a `late-commands` line that enables the service.
+- **As its own payload:** the owner sends the agent package as one more `fdo.payload` in Phase 2, and the config installs it from the delivered file. This lets the owner choose the agent version per device without rebuilding the ISO.
+
+Either way, the agent itself needs no change for BMO. It already does FDO; it simply finds itself installed and starts at first boot, where it previously had to be installed by hand.
+
+### What it takes on the owner side
+
+- One more per-device item in the Onboarding Service: the agent credential plus the DMS URL. It's minted by, or on behalf of, the DMS, which expects to see that credential when the agent connects.
+- The rendezvous blob (TO0) must still be registered when the agent runs, exactly as for Phase 2 (see [Rendezvous (TO0/TO1)](#rendezvous-to0to1)).
+- Nothing else changes. The Onboarding Service is simply the setup front door of the larger management plane.
+
+**Status:** Phases 1–3 are implemented and verified here for Ubuntu and Fedora. Phase 4 is the existing agent pattern, and this repo's test kickstart and autoinstall don't yet install an agent. Adding one is a config change on the device side plus one `fdo.credentials` entry on the owner side.
+
 ## SSH Host Key Security
 
 ### The Problem: Trust On First Use (TOFU)
@@ -696,6 +745,7 @@ ps aux | grep qemu
   - `usr/libexec/fdo/fdo-receive.sh` — Keygen, TO2, media validation, Anaconda kickstart hand-off
 - `doc/fdo-uki-architecture.svg` — Architecture diagram (Ubuntu)
 - `doc/fdo-uki-fedora-architecture.svg` — Architecture diagram (Fedora)
+- `doc/fdo-managed-edge.svg` — End-to-end view: BMO + OS install + management agent → fully managed edge system
 - `golden/` — Golden reference UKIs (preserved, not modified)
 - `README.md` — This file
 - `TEST-UBUNTU-UKI.md` — Verified test results and hashes

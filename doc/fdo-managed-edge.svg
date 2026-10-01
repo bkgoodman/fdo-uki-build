@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 1222" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#555"/></marker>
+    <marker id="arr-blue" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#1565c0"/></marker>
+    <marker id="arr-green" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#669900"/></marker>
+    <marker id="arr-amber" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#f57f17"/></marker>
+    <marker id="arr-purple" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#6a1b9a"/></marker>
+    <marker id="arr-orange" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#e65100"/></marker>
+    <!-- "What's inside the UKI": kernel | initrd | FDO client overlay (63 x 8) -->
+    <g id="uki-parts">
+      <rect x="0" y="0" width="24" height="8" rx="1.3" fill="#ffcdd2" stroke="#e57373" stroke-width="1.2"/>
+      <rect x="27" y="0" width="24" height="8" rx="1.3" fill="#ffcdd2" stroke="#e57373" stroke-width="1.2"/>
+      <rect x="53" y="0" width="10" height="8" rx="1.3" fill="#e0f2f1" stroke="#00897b" stroke-width="1.2"/>
+    </g>
+  </defs>
+
+  <!-- ════════════════ TITLE ════════════════ -->
+  <text x="460" y="32" text-anchor="middle" font-size="18" font-weight="bold" fill="#333">Putting It All Together: Zero-Touch to a Fully Managed Edge System</text>
+  <text x="460" y="52" text-anchor="middle" font-size="11" fill="#777">One device identity  •  four FDO-aware phases  •  each phase asks only for the FSIMs it needs</text>
+
+  <!-- ════════════════ OWNER: MANAGEMENT PLANE ════════════════ -->
+  <rect x="10" y="66" width="900" height="264" rx="14" fill="#fafafa" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="460" y="88" text-anchor="middle" font-size="14" font-weight="bold" fill="#626262" letter-spacing="1">OWNER — MANAGEMENT PLANE</text>
+
+  <!-- Onboarding Service (FDO, blue) -->
+  <rect x="25" y="98" width="585" height="222" rx="10" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="317" y="118" text-anchor="middle" font-size="13" font-weight="bold" fill="#1565c0">Onboarding Service <tspan font-weight="normal" font-size="11" fill="#555">(FDO server — new componentry)</tspan></text>
+  <text x="317" y="134" text-anchor="middle" font-size="10" fill="#555" font-style="italic">Sets up and credentials the device for everything that follows</text>
+
+  <!-- Per-Device column -->
+  <rect x="35" y="144" width="255" height="166" rx="8" fill="#fff8e1" stroke="#ffe082" stroke-width="1"/>
+  <text x="162" y="161" text-anchor="middle" font-size="11" font-weight="bold" fill="#f57f17">Per-Device</text>
+  <rect x="43" y="172" width="78" height="56" rx="5" fill="#fff3e0" stroke="#e65100" stroke-width="2"/>
+  <text x="82" y="187" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#e65100">Agent</text>
+  <text x="82" y="199" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#e65100">credential</text>
+  <text x="82" y="211" text-anchor="middle" font-size="8.5" fill="#e65100">+ DMS URL</text>
+  <text x="82" y="222" text-anchor="middle" font-size="7" fill="#e65100" font-family="monospace">fdo.credentials</text>
+  <rect x="98" y="166" width="28" height="12" rx="6" fill="#e65100"/>
+  <text x="112" y="175" text-anchor="middle" font-size="7.5" font-weight="bold" fill="#fff">NEW</text>
+  <rect x="127" y="172" width="78" height="56" rx="5" fill="#ffffff" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="166" y="187" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#f57f17">OS config</text>
+  <text x="166" y="199" text-anchor="middle" font-size="8.5" fill="#f57f17">kickstart /</text>
+  <text x="166" y="211" text-anchor="middle" font-size="8.5" fill="#f57f17">autoinstall</text>
+  <text x="166" y="222" text-anchor="middle" font-size="7" fill="#f57f17" font-family="monospace">fdo.payload</text>
+  <rect x="211" y="172" width="72" height="56" rx="5" fill="#ffffff" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="247" y="191" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#f57f17">Ownership</text>
+  <text x="247" y="203" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#f57f17">Voucher</text>
+  <text x="247" y="218" text-anchor="middle" font-size="8" fill="#f57f17">FDO protocol</text>
+  <text x="229" y="250" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">Defined once per</text>
+  <text x="229" y="262" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">device. Each item</text>
+  <text x="229" y="274" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">goes only to the</text>
+  <text x="229" y="286" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">phase whose FSIM</text>
+  <text x="229" y="298" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">asks for it.</text>
+
+  <!-- Static column -->
+  <rect x="298" y="144" width="180" height="166" rx="8" fill="#eff5f8" stroke="#90caf9" stroke-width="1"/>
+  <text x="388" y="161" text-anchor="middle" font-size="11" font-weight="bold" fill="#1565c0">Static OS Image</text>
+  <rect x="306" y="172" width="80" height="56" rx="5" fill="#ebf0e1" stroke="#669900" stroke-width="1.5"/>
+  <text x="346" y="188" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#669900">Full OS ISO</text>
+  <text x="346" y="201" text-anchor="middle" font-size="7" fill="#669900" font-family="monospace">fdo.payload</text>
+  <text x="346" y="214" text-anchor="middle" font-size="7.5" fill="#e65100">agent pkg: in ISO,</text>
+  <text x="346" y="224" text-anchor="middle" font-size="7.5" fill="#e65100">or its own payload</text>
+  <rect x="392" y="172" width="80" height="56" rx="5" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="432" y="188" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1565c0">UKI</text>
+  <use href="#uki-parts" x="400.5" y="194"/>
+  <text x="432" y="220" text-anchor="middle" font-size="7" fill="#1565c0" font-family="monospace">fdo.bmo</text>
+  <text x="389" y="250" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">Same for every</text>
+  <text x="389" y="262" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">device of this</text>
+  <text x="389" y="274" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">type; ideally</text>
+  <text x="389" y="286" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">from the OS</text>
+  <text x="389" y="298" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">vendor.</text>
+
+  <!-- Negotiated column -->
+  <rect x="486" y="144" width="116" height="166" rx="8" fill="#f3e5f5" stroke="#ce93d8" stroke-width="1"/>
+  <text x="544" y="161" text-anchor="middle" font-size="11" font-weight="bold" fill="#6a1b9a">Negotiated</text>
+  <rect x="494" y="172" width="100" height="56" rx="5" fill="#ffffff" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="544" y="191" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#6a1b9a">SSH Key Store</text>
+  <text x="544" y="206" text-anchor="middle" font-size="7" fill="#6a1b9a" font-family="monospace">fdo.credentials</text>
+  <text x="544" y="219" text-anchor="middle" font-size="7.5" fill="#6a1b9a">(from device)</text>
+  <text x="535" y="250" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">Learned during</text>
+  <text x="535" y="262" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">onboarding;</text>
+  <text x="535" y="274" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">enables verified</text>
+  <text x="535" y="286" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">first SSH</text>
+  <text x="535" y="298" text-anchor="middle" font-size="8.5" fill="#555" font-style="italic">(no TOFU)</text>
+
+  <!-- Management Service (existing, spec orange) -->
+  <rect x="620" y="98" width="280" height="222" rx="10" fill="#fff3e0" stroke="#e65100" stroke-width="2"/>
+  <text x="760" y="118" text-anchor="middle" font-size="13" font-weight="bold" fill="#e65100">Management Service (DMS)</text>
+  <text x="760" y="134" text-anchor="middle" font-size="10" fill="#555" font-style="italic">Your existing control plane</text>
+  <text x="636" y="162" font-size="11" fill="#333">• Deploy apps, containers, VMs</text>
+  <text x="636" y="182" font-size="11" fill="#333">• Updates and patching</text>
+  <text x="636" y="202" font-size="11" fill="#333">• Telemetry, inventory, health</text>
+  <text x="636" y="222" font-size="11" fill="#333">• Remote operations, fleet policy</text>
+  <text x="760" y="262" text-anchor="middle" font-size="9" fill="#777" font-style="italic">Same operator, same device record as the</text>
+  <text x="760" y="275" text-anchor="middle" font-size="9" fill="#777" font-style="italic">Onboarding Service; it minted the agent</text>
+  <text x="760" y="288" text-anchor="middle" font-size="9" fill="#777" font-style="italic">credential it now expects to see.</text>
+
+  <!-- ════════════════ DEVICE ════════════════ -->
+  <rect x="52" y="372" width="858" height="712" rx="13" fill="#fafafa" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="481" y="394" text-anchor="middle" font-size="14" font-weight="bold" fill="#424242" letter-spacing="1">DEVICE (EDGE SYSTEM)</text>
+  <rect x="66" y="404" width="794" height="26" rx="6" fill="#f5f5f5" stroke="#9e9e9e" stroke-width="1.2"/>
+  <text x="463" y="421" text-anchor="middle" font-size="10.5" fill="#424242"><tspan font-weight="bold">Device identity:</tspan> FDO credential in the TPM (DAK, from factory DI), shared by every FDO client below; credential reuse keeps it valid</text>
+
+  <!-- Stage 1 -->
+  <rect x="66" y="440" width="794" height="70" rx="9" fill="#ffffff" stroke="#bdbdbd" stroke-width="1.5"/>
+  <rect x="67" y="441" width="792" height="22" rx="8" fill="#eeeeee"/>
+  <text x="80" y="457" font-size="12.5" font-weight="bold" fill="#424242">Stage 1 · UEFI firmware</text>
+  <text x="262" y="457" font-size="10" fill="#1565c0" font-style="italic">FDO client (ROE): UEFI FDO module</text>
+  <rect x="770" y="446" width="80" height="13" rx="6.5" fill="#1565c0"/>
+  <text x="810" y="456" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#fff">fdo.bmo</text>
+  <rect x="80" y="476" width="420" height="24" rx="5" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="90" y="492" font-size="10.5" font-weight="bold" fill="#1565c0">← fdo.bmo: UKI (kernel + installer initrd + FDO client)</text>
+  <use href="#uki-parts" x="428" y="484"/>
+  <text x="514" y="492" font-size="10.5" fill="#333">verify hash, then chainload</text>
+  <line x1="463" y1="510" x2="463" y2="526" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Stage 2 (coral: the UKI's initrd) -->
+  <rect x="66" y="530" width="794" height="130" rx="9" fill="#fce4ec" stroke="#e57373" stroke-width="2"/>
+  <rect x="67" y="531" width="792" height="22" rx="8" fill="#ffcdd2"/>
+  <text x="80" y="547" font-size="12.5" font-weight="bold" fill="#c62828">Stage 2 · Installer (the UKI)</text>
+  <text x="298" y="547" font-size="10" fill="#1565c0" font-style="italic">FDO client (ROE): go-fdo-endpoint in the initrd</text>
+  <rect x="664" y="536" width="72" height="13" rx="6.5" fill="#669900"/>
+  <text x="700" y="546" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#fff">fdo.payload</text>
+  <rect x="740" y="536" width="110" height="13" rx="6.5" fill="#6a1b9a"/>
+  <text x="795" y="546" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#fff">fdo.credentials ↑</text>
+  <rect x="80" y="566" width="410" height="22" rx="5" fill="#fff8e1" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="90" y="581" font-size="10.5" font-weight="bold" fill="#f57f17">← fdo.payload: OS config (kickstart / autoinstall)</text>
+  <rect x="500" y="566" width="340" height="22" rx="5" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="510" y="581" font-size="10.5" font-weight="bold" fill="#6a1b9a">→ fdo.credentials: SSH host public keys + IP</text>
+  <rect x="80" y="592" width="410" height="22" rx="5" fill="#ebf0e1" stroke="#669900" stroke-width="1.5"/>
+  <text x="90" y="607" font-size="10.5" font-weight="bold" fill="#669900">← fdo.payload: full OS ISO → RAM disk</text>
+  <rect x="80" y="618" width="410" height="22" rx="5" fill="#ffffff" stroke="#e65100" stroke-width="1.2" stroke-dasharray="4,3"/>
+  <text x="90" y="633" font-size="10.5" font-weight="bold" fill="#e65100">← fdo.payload (optional): Management Agent package</text>
+  <text x="500" y="633" font-size="10" fill="#777">← = owner to device    → = device to owner</text>
+  <line x1="463" y1="660" x2="463" y2="676" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Stage 3 -->
+  <rect x="66" y="680" width="794" height="96" rx="9" fill="#ffffff" stroke="#669900" stroke-width="1.5"/>
+  <rect x="67" y="681" width="792" height="22" rx="8" fill="#ebf0e1"/>
+  <text x="80" y="697" font-size="12.5" font-weight="bold" fill="#424242">Stage 3 · OS installation</text>
+  <text x="272" y="697" font-size="10" fill="#888" font-style="italic">stock installer (e.g. Fedora Anaconda, Ubuntu Subiquity)</text>
+  <rect x="770" y="686" width="80" height="13" rx="6.5" fill="#9e9e9e"/>
+  <text x="810" y="696" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#fff">no FDO</text>
+  <text x="80" y="722" font-size="11" fill="#333">Installs the OS from the delivered ISO, as the delivered config says; keeps the FDO-registered SSH host keys</text>
+  <rect x="80" y="732" width="760" height="34" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1.8"/>
+  <text x="92" y="747" font-size="11" font-weight="bold" fill="#e65100">+ Installs the Management Agent and enables it to start at boot</text>
+  <text x="92" y="760" font-size="10" fill="#555">from the OS image / its repo, or the agent package delivered in Stage 2; one more line in the kickstart / autoinstall</text>
+  <line x1="463" y1="776" x2="463" y2="796" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="471" y="791" font-size="10" fill="#555">reboot into the installed OS</text>
+
+  <!-- Stage 4: Management Agent (spec orange) -->
+  <rect x="66" y="800" width="794" height="170" rx="9" fill="#fff3e0" stroke="#e65100" stroke-width="2"/>
+  <rect x="67" y="801" width="792" height="22" rx="8" fill="#ffe0b2"/>
+  <text x="80" y="817" font-size="12.5" font-weight="bold" fill="#e65100">Stage 4 · First boot: Management Agent</text>
+  <text x="400" y="817" font-size="10" fill="#bf360c" font-style="italic">the application layer: the agent runs FDO one more time</text>
+  <rect x="740" y="806" width="110" height="13" rx="6.5" fill="#e65100"/>
+  <text x="795" y="816" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#fff">fdo.credentials ↓</text>
+
+  <rect x="80" y="834" width="440" height="100" rx="7" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="92" y="851" font-size="11" font-weight="bold" fill="#1565c0">Embedded FDO client (ROE role)</text>
+  <text x="92" y="867" font-size="10.5" fill="#333">Same TPM device credential → TO1 / TO2 (credential reuse)</text>
+  <rect x="90" y="874" width="420" height="22" rx="5" fill="#ffffff" stroke="#e65100" stroke-width="1.8"/>
+  <text x="100" y="889" font-size="10.5" font-weight="bold" fill="#e65100">← fdo.credentials: agent credential + DMS URL</text>
+  <text x="92" y="912" font-size="10" fill="#555">Never asks for fdo.bmo or the OS payloads, so it never gets them;</text>
+  <text x="92" y="925" font-size="10" fill="#555">earlier phases never asked for the agent credential, so they never got it.</text>
+
+  <rect x="535" y="834" width="310" height="100" rx="7" fill="#ffffff" stroke="#e65100" stroke-width="1.8"/>
+  <text x="547" y="851" font-size="11" font-weight="bold" fill="#e65100">Management Agent (runtime)</text>
+  <text x="547" y="869" font-size="10.5" fill="#333">Connects to the DMS at the delivered URL,</text>
+  <text x="547" y="884" font-size="10.5" fill="#333">authenticating with its new credential</text>
+  <text x="547" y="904" font-size="10.5" fill="#333">Takes orders: install, update, report, run</text>
+  <text x="547" y="922" font-size="9" fill="#888" font-style="italic">The part that already exists and is in use today</text>
+  <line x1="520" y1="884" x2="533" y2="884" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="463" y="957" text-anchor="middle" font-size="10" fill="#bf360c" font-style="italic">⑥ Final state: device in service (as in the FDO specification's entity diagram)</text>
+  <line x1="463" y1="970" x2="463" y2="990" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Result -->
+  <rect x="120" y="994" width="686" height="74" rx="10" fill="#e8f5e9" stroke="#43a047" stroke-width="2"/>
+  <text x="463" y="1018" text-anchor="middle" font-size="15" font-weight="bold" fill="#2e7d32">Fully Managed Edge System</text>
+  <text x="463" y="1037" text-anchor="middle" font-size="11" fill="#333">From bare metal, zero-touch: OS installed  •  SSH identity verified  •  agent credentialed and connected</text>
+  <text x="463" y="1055" text-anchor="middle" font-size="11" fill="#333">No manual agent install, no hand-copied credentials, one device identity throughout</text>
+
+  <!-- ════════════════ CAPTION ════════════════ -->
+  <rect x="20" y="1098" width="880" height="56" rx="8" fill="#fffde7" stroke="#e0d38a" stroke-width="1"/>
+  <text x="460" y="1119" text-anchor="middle" font-size="11" fill="#5d4f00"><tspan font-weight="bold">The twist:</tspan> the application layer (Stage 4) is the <tspan font-style="italic">last</tspan> step in the FDO architecture, yet it was the <tspan font-style="italic">first</tspan> thing FDO was used for.</text>
+  <text x="460" y="1138" text-anchor="middle" font-size="11" fill="#5d4f00">BMO (Stages 1–3) now delivers the OS <tspan font-style="italic">and</tspan> the agent, so the whole chain from bare metal to managed device is one zero-touch flow.</text>
+
+  <!-- ════════════════ TRACE LINES ════════════════ -->
+  <!-- left margin: owner → device (leftmost source = outermost, topmost turn) -->
+  <path d="M 82,228 V 338 H 14 V 885 H 88" stroke="#e65100" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-orange)"/>
+  <text x="-850" y="21" font-size="8" font-weight="bold" fill="#e65100" transform="rotate(-90)">agent credential</text>
+  <path d="M 166,228 V 344 H 24 V 577 H 78" stroke="#f57f17" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-amber)"/>
+  <text x="-562" y="31" font-size="8" font-weight="bold" fill="#f57f17" transform="rotate(-90)">OS config</text>
+  <path d="M 346,228 V 350 H 34 V 603 H 78" stroke="#669900" stroke-width="2.5" fill="none" stroke-dasharray="8,4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-green)"/>
+  <text x="-596" y="41" font-size="8" font-weight="bold" fill="#669900" transform="rotate(-90)">OS ISO</text>
+  <path d="M 432,228 V 356 H 44 V 488 H 78" stroke="#1565c0" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-blue)"/>
+  <text x="-478" y="51" font-size="8" font-weight="bold" fill="#1565c0" transform="rotate(-90)">UKI</text>
+  <!-- right margin: device → owner (SSH keys), and DMS ⇄ agent (⑥) -->
+  <path d="M 842,577 H 875 V 354 H 588 V 231" stroke="#6a1b9a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-purple)"/>
+  <text x="440" y="-879" font-size="8" font-weight="bold" fill="#6a1b9a" transform="rotate(90)">SSH keys</text>
+  <path d="M 760,322 V 346 H 895 V 884 H 849" stroke="#e65100" stroke-width="2.5" fill="none" stroke-dasharray="7,4" stroke-linecap="round" stroke-linejoin="round" marker-start="url(#arr-orange)" marker-end="url(#arr-orange)"/>
+  <text x="560" y="-899" font-size="8" font-weight="bold" fill="#e65100" transform="rotate(90)">⑥ managed by the DMS</text>
+
+  <!-- ════════════════ LEGEND ════════════════ -->
+  <rect x="20" y="1166" width="880" height="44" rx="6" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+  <rect x="35" y="1173" width="12" height="12" rx="2" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="52" y="1183" font-size="9" font-weight="bold" fill="#555">FDO componentry</text>
+  <text x="150" y="1183" font-size="8" fill="#888">(new: onboarding service, FDO clients, UKI)</text>
+  <rect x="330" y="1173" width="12" height="12" rx="2" fill="#fff3e0" stroke="#e65100"/>
+  <text x="347" y="1183" font-size="9" font-weight="bold" fill="#555">Existing management</text>
+  <text x="468" y="1183" font-size="8" fill="#888">(DMS + Management Agent)</text>
+  <rect x="590" y="1173" width="12" height="12" rx="2" fill="#ffcdd2" stroke="#e57373"/>
+  <text x="607" y="1183" font-size="9" font-weight="bold" fill="#555">Vendor kernel / initrd</text>
+  <rect x="35" y="1191" width="12" height="12" rx="2" fill="#ebf0e1" stroke="#669900"/>
+  <text x="52" y="1201" font-size="9" font-weight="bold" fill="#555">OS ISO</text>
+  <rect x="130" y="1191" width="12" height="12" rx="2" fill="#fff8e1" stroke="#f57f17"/>
+  <text x="147" y="1201" font-size="9" font-weight="bold" fill="#555">Per-device config</text>
+  <text x="256" y="1201" font-size="8" fill="#888">(OS config + voucher)</text>
+  <rect x="372" y="1191" width="12" height="12" rx="2" fill="#f3e5f5" stroke="#6a1b9a"/>
+  <text x="389" y="1201" font-size="9" font-weight="bold" fill="#555">Negotiated</text>
+  <text x="456" y="1201" font-size="8" fill="#888">(SSH keys)</text>
+  <rect x="590" y="1191" width="22" height="12" rx="6" fill="#9e9e9e"/>
+  <text x="619" y="1201" font-size="9" font-weight="bold" fill="#555">FSIMs this phase asks for</text>
+</svg>
