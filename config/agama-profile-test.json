@@ -1,0 +1,66 @@
+{
+  "product": {
+    "id": "openSUSE_Leap"
+  },
+  "localization": {
+    "language": "en_US.UTF-8",
+    "keyboard": "us",
+    "timezone": "UTC"
+  },
+  "hostname": {
+    "static": "fdo-installed"
+  },
+  "user": {
+    "fullName": "FDO Device User",
+    "userName": "fdo",
+    "password": "$6$FDO.SALT$rD0sGDQl0UONZCEGST2cf5KpVgjN8Cb6ETtvFLDHA.fCWqM4u6Jj6l6XG5XUlave7lGunXO3RMPb.In/oKbqR/",
+    "hashedPassword": true
+  },
+  "software": {
+    "packages": [
+      "openssh-server",
+      "sudo"
+    ]
+  },
+  "storage": {
+    "drives": [
+      {
+        "search": {
+          "condition": {
+            "size": {
+              "greater": "16 GiB"
+            }
+          },
+          "sort": {
+            "size": "desc"
+          },
+          "max": 1,
+          "ifNotFound": "error"
+        },
+        "partitions": [
+          {
+            "search": "*",
+            "delete": true
+          },
+          {
+            "generate": "default"
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "post": [
+      {
+        "name": "fdo-copy-ssh-host-keys",
+        "chroot": false,
+        "content": "#!/bin/bash\n# Runs in the Agama live system (chroot: false); the target is mounted at /mnt.\n# Copy the SSH host keys generated during FDO onboarding (and already\n# registered with the owner via fdo.credentials) onto the target.\nset -e\nif [ ! -d /run/fdo/ssh-host-keys ]; then\n    echo \"FDO: /run/fdo/ssh-host-keys not found\" >&2\n    exit 1\nfi\ncp -a /run/fdo/ssh-host-keys/ssh_host_* /mnt/etc/ssh/\necho \"FDO: copied SSH host keys to /mnt/etc/ssh\"\n"
+      },
+      {
+        "name": "fdo-harden",
+        "chroot": true,
+        "content": "#!/bin/bash\n# Runs inside the installed system (chroot: true).\nset -e\n# Ownership, modes and SELinux labels for the copied host keys. sshd-gen-keys-start\n# (ssh-keygen -A) only creates missing keys, so these survive first boot.\nchown root:root /etc/ssh/ssh_host_*\nchmod 0600 /etc/ssh/ssh_host_*_key\nchmod 0644 /etc/ssh/ssh_host_*_key.pub\n\n# Onboarding key for the fdo user (Agama 16.0 has no user.sshPublicKey yet)\ninstall -d -m 0700 /home/fdo/.ssh\necho \"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIECb1b7JjbIThvin1gum8LH5ctWoCCKGuUsyAQoa3ko3 fdo-onboarding\" > /home/fdo/.ssh/authorized_keys\nchmod 0600 /home/fdo/.ssh/authorized_keys\nchown -R fdo: /home/fdo/.ssh\n\n# fdo user: passwordless sudo\necho \"fdo ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/90-fdo-user\nchmod 0440 /etc/sudoers.d/90-fdo-user\n\n# Key-only SSH\nprintf 'PasswordAuthentication no\\nKbdInteractiveAuthentication no\\n' > /etc/ssh/sshd_config.d/10-fdo.conf\nchmod 0600 /etc/ssh/sshd_config.d/10-fdo.conf\nsystemctl enable sshd.service\nif command -v firewall-offline-cmd >/dev/null; then\n    firewall-offline-cmd --add-service=ssh || true\nfi\n\n# SELinux is enforcing on Leap 16: label everything written from outside the policy\nif command -v restorecon >/dev/null; then\n    restorecon -Rv /etc/ssh /etc/sudoers.d /home/fdo/.ssh\nfi\n\n# Agama copies the installer's kernel parameters into the installed bootloader\n# config. Drop the installer-only ones: memmap= would permanently reserve the\n# ISO-sized RAM region as a fake pmem disk; nokaslr and systemd.unit are not wanted.\nif [ -f /etc/default/grub ]; then\n    sed -i -E '/^GRUB_CMDLINE_LINUX_DEFAULT=/{s/ ?memmap=[^ \"]*//g; s/ ?nokaslr//g; s/ ?systemd\\.unit=[^ \"]*//g; s/=\"  */=\"/}' /etc/default/grub\n    grep '^GRUB_CMDLINE_LINUX_DEFAULT=' /etc/default/grub\n    update-bootloader --refresh || grub2-mkconfig -o /boot/grub2/grub.cfg\nfi\n\n# Mark installation complete\nmkdir -p /var/lib\necho FDO_AUTOINSTALL_COMPLETE > /var/lib/fdo-autoinstall-complete\n"
+      }
+    ]
+  }
+}

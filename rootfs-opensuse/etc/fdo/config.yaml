@@ -1,0 +1,43 @@
+blob_path: ""
+debug: false
+fdo_version: 200
+
+di:
+  url: ""  # DI is not performed from the UKI; URL comes from the EFI client's DI phase
+  key: "ec256"
+  key_enc: "x509"
+
+crypto:
+  cipher_suite: "A128GCM"
+  kex_suite: "ECDH256"
+
+transport:
+  tpm_path: ""
+
+operation:
+  print_device: false
+  rv_only: false
+  ignore_credential_rotation: true
+
+handlers:
+  sysconfig: {}
+  payload:
+    temp_dir: "/tmp/fdo_payloads"
+    default_action: "reject"
+    mime_types:
+      application/vnd.opensuse.agama+json:
+        enabled: true
+        destination: "/run/fdo/agama/profile.json"
+        command: "echo \"Agama profile received: $(stat -c %s {filename}) bytes\""
+      application/x-iso9660-image:
+        enabled: true
+        destination: "/dev/pmem0"
+
+service_info:
+  download_dir: ""
+  echo_commands: false
+  wget_dir: ""
+  upload_paths: []
+
+fdo_sys:
+  enabled: false

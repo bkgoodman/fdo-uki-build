@@ -1,7 +1,9 @@
 assets/
 build/
+build-opensuse/
 build-installer/
 build-fedora/
+build-opensuse/
 firmware/
 golden/
 *.efi

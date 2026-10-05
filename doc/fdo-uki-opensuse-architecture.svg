@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 1480" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#555"/></marker>
+    <marker id="arr-blue" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#1565c0"/></marker>
+    <marker id="arr-green" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#669900"/></marker>
+    <marker id="arr-amber" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#f57f17"/></marker>
+    <marker id="arr-purple" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#6a1b9a"/></marker>
+    <marker id="arr-teal" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#00897b"/></marker>
+    <!-- "What's inside the UKI": kernel | untouched initrd | appended overlay (63 x 8, origin top-left) -->
+    <g id="uki-parts">
+      <rect x="0" y="0" width="24" height="8" rx="1.3" fill="#ffcdd2" stroke="#e57373" stroke-width="1.2"/>
+      <rect x="27" y="0" width="24" height="8" rx="1.3" fill="#ffcdd2" stroke="#e57373" stroke-width="1.2"/>
+      <rect x="53" y="0" width="10" height="8" rx="1.3" fill="#e0f2f1" stroke="#00897b" stroke-width="1.2"/>
+    </g>
+  </defs>
+
+  <!-- ════════════════ BUILD-TIME PREPARATION ════════════════ -->
+  <rect x="10" y="10" width="900" height="380" rx="14" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="460" y="36" text-anchor="middle" font-size="14" font-weight="bold" fill="#424242" letter-spacing="1">BUILD-TIME PREPARATION — build-opensuse-installer-uki.sh</text>
+  <text x="460" y="52" text-anchor="middle" font-size="10" fill="#888" font-style="italic">Future vision: OS vendor (openSUSE) supplies UKI + ISO directly; users skip this step</text>
+
+  <!-- Vendor ISO (coral) -->
+  <rect x="40" y="64" width="260" height="104" rx="8" fill="#fce4ec" stroke="#e57373" stroke-width="1.5"/>
+  <text x="170" y="84" text-anchor="middle" font-size="13" font-weight="bold" fill="#c62828">openSUSE Leap 16.0 Offline ISO</text>
+  <text x="170" y="100" text-anchor="middle" font-size="7.3" fill="#666" font-family="monospace">Leap-16.0-offline-installer-x86_64-Build178.27.install.iso</text>
+  <text x="170" y="116" text-anchor="middle" font-size="11" fill="#666">kernel + initrd (boot/x86_64/loader)</text>
+  <text x="170" y="131" text-anchor="middle" font-size="11" fill="#666">Agama live root LiveOS/squashfs.img</text>
+  <text x="170" y="146" text-anchor="middle" font-size="11" fill="#666">full package repo in /install (offline)</text>
+  <text x="170" y="161" text-anchor="middle" font-size="9" fill="#999">4.2 GiB  •  label Install-Leap-16.0-x86_64</text>
+
+  <!-- Build checks (gray) -->
+  <rect x="320" y="64" width="280" height="104" rx="8" fill="#ffffff" stroke="#bdbdbd" stroke-width="1.2"/>
+  <text x="460" y="84" text-anchor="middle" font-size="12" font-weight="bold" fill="#616161">Build-time checks (fail loudly)</text>
+  <text x="332" y="102" font-size="10" fill="#555">• SHA-512, size and volume label of the ISO</text>
+  <text x="332" y="117" font-size="10" fill="#555">• kernel version = initrd kernel modules</text>
+  <text x="332" y="132" font-size="10" fill="#555">• modules: libnvdimm nd_e820 isofs squashfs tpm</text>
+  <text x="332" y="147" font-size="10" fill="#555">• NM unit Before=dracut-initqueue</text>
+  <text x="332" y="161" font-size="10" fill="#555">• live-root LABEL + Agama inst.* forwarding</text>
+
+  <!-- FDO overlay (teal) -->
+  <rect x="620" y="64" width="260" height="104" rx="8" fill="#e0f2f1" stroke="#00897b" stroke-width="1.5"/>
+  <text x="750" y="84" text-anchor="middle" font-size="13" font-weight="bold" fill="#00695c">FDO overlay (rootfs-opensuse/)</text>
+  <text x="750" y="102" text-anchor="middle" font-size="11" fill="#666">go-fdo-endpoint (static, -tags=tpm)</text>
+  <text x="750" y="117" text-anchor="middle" font-size="11" fill="#666">+ fdo-receive.service / fdo-receive.sh</text>
+  <text x="750" y="132" text-anchor="middle" font-size="11" fill="#666">+ SSH host-key generation script</text>
+  <text x="750" y="147" text-anchor="middle" font-size="11" fill="#666">+ etc/fdo/config.yaml (FSIM handlers)</text>
+  <text x="750" y="161" text-anchor="middle" font-size="9" fill="#999">+ nd_pmem / nd_btt (from the ISO's kernel RPM)</text>
+
+  <!-- extract arrows -->
+  <line x1="85" y1="168" x2="85" y2="194" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="215" y1="168" x2="215" y2="194" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="122" y="186" font-size="10" fill="#555">extract</text>
+
+  <!-- kernel / initrd / overlay chips -->
+  <rect x="40" y="198" width="90" height="40" rx="5" fill="#ffcdd2" stroke="#e57373" stroke-width="1.5"/>
+  <text x="85" y="215" text-anchor="middle" font-size="11" font-weight="bold" fill="#c62828">linux</text>
+  <text x="85" y="230" text-anchor="middle" font-size="9" fill="#c62828">6.12.0 • 15 MiB</text>
+  <rect x="140" y="198" width="190" height="40" rx="5" fill="#ffcdd2" stroke="#e57373" stroke-width="1.5"/>
+  <text x="235" y="215" text-anchor="middle" font-size="11" font-weight="bold" fill="#c62828">initrd — untouched</text>
+  <text x="235" y="230" text-anchor="middle" font-size="9" fill="#c62828">dracut XZ cpio • 103 MiB</text>
+  <text x="340" y="223" font-size="16" font-weight="bold" fill="#555">‖</text>
+  <rect x="356" y="198" width="190" height="40" rx="5" fill="#e0f2f1" stroke="#00897b" stroke-width="1.5"/>
+  <text x="451" y="215" text-anchor="middle" font-size="11" font-weight="bold" fill="#00695c">+ overlay.cpio.gz</text>
+  <text x="451" y="230" text-anchor="middle" font-size="9" fill="#00695c">appended at a 4-byte boundary</text>
+  <path d="M 750,168 L 750,210 Q 750,218 740,218 L 548,218" stroke="#00897b" stroke-width="1.5" fill="none" marker-end="url(#arr-teal)"/>
+  <text x="650" y="210" text-anchor="middle" font-size="10" fill="#00897b" font-weight="bold">cpio + gzip, append</text>
+
+  <!-- cmdline (right) -->
+  <rect x="620" y="240" width="260" height="62" rx="6" fill="#ffffff" stroke="#bdbdbd" stroke-width="1.2"/>
+  <text x="630" y="255" font-size="10" font-weight="bold" fill="#616161">.cmdline (computed)</text>
+  <text x="630" y="270" font-size="9" fill="#444" font-family="monospace">root=live:LABEL=Install-Leap-16.0-x86_64</text>
+  <text x="630" y="283" font-size="9" fill="#444" font-family="monospace">inst.auto=file:///run/fdo/agama/profile.json</text>
+  <text x="630" y="296" font-size="9" fill="#444" font-family="monospace">inst.finish=poweroff memmap=4328M!4G …</text>
+
+  <!-- "same file" dashed link (drawn first so the objcopy box covers it) -->
+  <path d="M 300,150 L 308,150 L 308,338 L 300,338" stroke="#999" stroke-width="1" stroke-dasharray="4,3" fill="none" marker-end="url(#arr)"/>
+  <text x="312" y="330" font-size="9" fill="#999">same file</text>
+
+  <!-- objcopy -->
+  <rect x="40" y="252" width="560" height="34" rx="4" fill="#f2f2f2" stroke="#d8d8d8" stroke-width="1.5"/>
+  <text x="320" y="273" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#757575">objcopy: EFI stub + .osrel (openSUSE) + .cmdline + .linux + .initrd (original ‖ overlay)</text>
+  <line x1="85" y1="238" x2="85" y2="250" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+  <line x1="235" y1="238" x2="235" y2="250" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+  <line x1="451" y1="238" x2="451" y2="250" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+  <line x1="620" y1="271" x2="602" y2="271" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <!-- outputs -->
+  <line x1="100" y1="286" x2="100" y2="312" stroke="#1565c0" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+  <rect x="38" y="316" width="125" height="44" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="100" y="331" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565c0">UKI (.efi)</text>
+  <use href="#uki-parts" x="68.5" y="336"/>
+  <text x="100" y="355" text-anchor="middle" font-size="9" fill="#1565c0">125 MiB</text>
+  <rect x="173" y="316" width="125" height="44" rx="8" fill="#ebf0e1" stroke="#669900" stroke-width="2"/>
+  <text x="235" y="335" text-anchor="middle" font-size="11" font-weight="bold" fill="#669900">Full Vendor ISO</text>
+  <text x="235" y="351" text-anchor="middle" font-size="9" fill="#669900">(kept intact)</text>
+  <!-- why-append note -->
+  <rect x="360" y="312" width="520" height="70" rx="6" fill="#fffde7" stroke="#e0d38a" stroke-width="1"/>
+  <text x="372" y="329" font-size="10" font-weight="bold" fill="#6d5d00">Append, don't repack</text>
+  <text x="372" y="344" font-size="10" fill="#555">The kernel (init/initramfs.c) unpacks concatenated cpio archives, each with its own compression,</text>
+  <text x="372" y="358" font-size="10" fill="#555">in order; later files overlay earlier ones. Same mechanism that loads early microcode.</text>
+  <text x="372" y="372" font-size="10" fill="#555">Original stays a byte-identical prefix (cmp-checked); /bin /sbin /lib symlinks are never touched.</text>
+
+  <!-- ════════════════ FDO SERVER ════════════════ -->
+  <rect x="10" y="410" width="900" height="205" rx="14" fill="#fafafa" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="460" y="432" text-anchor="middle" font-size="14" font-weight="bold" fill="#626262" letter-spacing="1">FDO SERVER (go-fdo)</text>
+  <line x1="100" y1="360" x2="100" y2="495" stroke="#1565c0" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+  <line x1="235" y1="360" x2="235" y2="495" stroke="#669900" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <!-- Column 1: static -->
+  <rect x="25" y="442" width="285" height="165" rx="8" fill="#eff5f8" stroke="#90caf9" stroke-width="1"/>
+  <text x="167" y="460" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565c0">Static OS Image</text>
+  <text x="167" y="474" text-anchor="middle" font-size="9" fill="#555">Same for all devices of this type</text>
+  <text x="167" y="487" text-anchor="middle" font-size="9" fill="#888" font-style="italic">Future: supplied by OS vendor directly</text>
+  <rect x="38" y="497" width="125" height="50" rx="5" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="100" y="510" text-anchor="middle" font-size="11" font-weight="bold" fill="#1565c0">UKI</text>
+  <use href="#uki-parts" x="68.5" y="514"/>
+  <text x="100" y="533" text-anchor="middle" font-size="9" font-weight="bold" fill="#1565c0">BMO FSIM</text>
+  <text x="100" y="543" text-anchor="middle" font-size="7" fill="#1565c0" font-family="monospace">application/x-uefi-image</text>
+  <rect x="173" y="497" width="125" height="50" rx="5" fill="#ebf0e1" stroke="#669900" stroke-width="1.5"/>
+  <text x="235" y="517" text-anchor="middle" font-size="11" font-weight="bold" fill="#669900">Full ISO</text>
+  <text x="235" y="531" text-anchor="middle" font-size="9" font-weight="bold" fill="#669900">Payload FSIM</text>
+  <text x="235" y="542" text-anchor="middle" font-size="7" fill="#669900" font-family="monospace">application/x-iso9660-image</text>
+  <text x="100" y="560" text-anchor="middle" font-size="8" fill="#1565c0">↓ delivers to Stage 1</text>
+  <text x="235" y="560" text-anchor="middle" font-size="8" fill="#669900">↓ delivers to Stage 2 (2nd)</text>
+
+  <!-- Column 2: per-device -->
+  <rect x="320" y="442" width="280" height="165" rx="8" fill="#fff8e1" stroke="#ffe082" stroke-width="1"/>
+  <text x="460" y="460" text-anchor="middle" font-size="12" font-weight="bold" fill="#f57f17">Per-Device</text>
+  <text x="460" y="474" text-anchor="middle" font-size="9" fill="#555">Specific to each device being onboarded</text>
+  <text x="394" y="490" text-anchor="middle" font-size="9" font-weight="bold" fill="#f57f17">from user / operator</text>
+  <text x="526" y="490" text-anchor="middle" font-size="9" font-weight="bold" fill="#f57f17">from device vendor (DI)</text>
+  <rect x="333" y="497" width="122" height="50" rx="5" fill="#ffffff" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="394" y="514" text-anchor="middle" font-size="11" font-weight="bold" fill="#f57f17">Agama profile</text>
+  <text x="394" y="528" text-anchor="middle" font-size="9" font-weight="bold" fill="#f57f17">Payload FSIM</text>
+  <text x="394" y="541" text-anchor="middle" font-size="7" fill="#f57f17" font-family="monospace">vnd.opensuse.agama+json</text>
+  <rect x="465" y="497" width="122" height="50" rx="5" fill="#ffffff" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="526" y="514" text-anchor="middle" font-size="11" font-weight="bold" fill="#f57f17">Ownership</text>
+  <text x="526" y="528" text-anchor="middle" font-size="11" font-weight="bold" fill="#f57f17">Voucher</text>
+  <text x="526" y="541" text-anchor="middle" font-size="8" fill="#f57f17">FDO protocol</text>
+  <text x="394" y="560" text-anchor="middle" font-size="8" fill="#f57f17">↓ delivers to Stage 2 (1st)</text>
+  <text x="526" y="560" text-anchor="middle" font-size="8" fill="#f57f17">↓ used in Stage 1 + 2</text>
+  <rect x="333" y="568" width="254" height="32" rx="5" fill="#ffffff" stroke="#f57f17" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="460" y="581" text-anchor="middle" font-size="9" font-weight="bold" fill="#f57f17">RV blob (TO0): owner's TO2 address</text>
+  <text x="460" y="594" text-anchor="middle" font-size="8.5" fill="#555">lets both stages run TO1 → TO2; no address baked into the UKI</text>
+
+  <!-- Column 3: negotiated -->
+  <rect x="610" y="442" width="285" height="165" rx="8" fill="#f3e5f5" stroke="#ce93d8" stroke-width="1"/>
+  <text x="752" y="460" text-anchor="middle" font-size="12" font-weight="bold" fill="#6a1b9a">Negotiated State</text>
+  <text x="752" y="474" text-anchor="middle" font-size="9" fill="#555">Automatic — not user-specified</text>
+  <text x="752" y="487" text-anchor="middle" font-size="9" fill="#888" font-style="italic">Exchanged during onboarding protocol</text>
+  <rect x="637" y="497" width="230" height="50" rx="5" fill="#ffffff" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="752" y="517" text-anchor="middle" font-size="11" font-weight="bold" fill="#6a1b9a">SSH Key Store</text>
+  <text x="752" y="533" text-anchor="middle" font-size="9" font-weight="bold" fill="#6a1b9a">Credentials FSIM</text>
+  <text x="752" y="560" text-anchor="middle" font-size="8" fill="#6a1b9a">↑ received from Stage 2</text>
+  <text x="752" y="580" text-anchor="middle" font-size="8.5" fill="#555">ed25519 / ecdsa / rsa public keys + device IP</text>
+  <text x="752" y="594" text-anchor="middle" font-size="8.5" fill="#555">→ known_hosts for a verified first connection</text>
+
+  <!-- ════════════════ DEVICE ONBOARDING ════════════════ -->
+  <rect x="48" y="645" width="862" height="770" rx="13" fill="#fafafa" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="479" y="667" text-anchor="middle" font-size="14" font-weight="bold" fill="#424242" letter-spacing="1">DEVICE ONBOARDING</text>
+
+  <!-- Stage 1 -->
+  <rect x="62" y="677" width="818" height="92" rx="10" fill="#ffffff" stroke="#bdbdbd" stroke-width="1.5"/>
+  <rect x="63" y="678" width="816" height="22" rx="9" fill="#eeeeee"/>
+  <text x="80" y="694" font-size="13" font-weight="bold" fill="#424242">Stage 1: UEFI Boot</text>
+  <text x="220" y="694" font-size="11" fill="#888">(fdo-uefi-rs)</text>
+  <text x="74" y="718" font-size="11" fill="#333">TO1 (to1d verified) → TO2 with TPM credential; voucher chain and owner signature verified</text>
+  <rect x="74" y="728" width="420" height="28" rx="5" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="84" y="746" font-size="11" font-weight="bold" fill="#1565c0">← BMO FSIM: UKI (125 MiB, ~2,000 rounds, SHA-256 checked)</text>
+  <text x="506" y="746" font-size="11" fill="#333">then chainloads it via LoadImage / StartImage</text>
+  <line x1="479" y1="769" x2="479" y2="789" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="487" y="784" font-size="10" fill="#555">chainload</text>
+  <use href="#uki-parts" x="408" y="776"/>
+
+  <!-- Stage 2 (coral: this IS the initrd) -->
+  <rect x="62" y="793" width="818" height="370" rx="10" fill="#fce4ec" stroke="#e57373" stroke-width="2"/>
+  <rect x="63" y="794" width="816" height="22" rx="9" fill="#ffcdd2"/>
+  <text x="80" y="810" font-size="13" font-weight="bold" fill="#c62828">Stage 2: Agama live initrd (dracut + systemd)</text>
+  <text x="478" y="810" font-size="11" fill="#c62828" font-style="italic">← the untouched vendor initrd + appended overlay from above</text>
+
+  <!-- systemd timeline chips -->
+  <rect x="74" y="824" width="786" height="24" rx="5" fill="#ffffff" stroke="#e0a0a0" stroke-width="1"/>
+  <text x="84" y="840" font-size="10.5" fill="#333"><tspan font-weight="bold" fill="#c62828">dracut-cmdline</tspan>  root=live:LABEL=Install-Leap-16.0-x86_64 (baked into the initrd); Agama hook records the inst.* options</text>
+  <rect x="74" y="852" width="786" height="24" rx="5" fill="#ffffff" stroke="#e0a0a0" stroke-width="1"/>
+  <text x="84" y="868" font-size="10.5" fill="#333"><tspan font-weight="bold" fill="#c62828">nm-initrd → nm-wait-online-initrd</tspan>  NetworkManager DHCP (ip=dhcp rd.neednet=1); kernel creates /dev/pmem0 from memmap=</text>
+
+  <!-- fdo-receive.service (teal) -->
+  <rect x="74" y="882" width="786" height="214" rx="8" fill="#e0f2f1" stroke="#00897b" stroke-width="2"/>
+  <rect x="75" y="883" width="784" height="20" rx="7" fill="#b2dfdb"/>
+  <text x="86" y="898" font-size="12" font-weight="bold" fill="#00695c">fdo-receive.service</text>
+  <text x="222" y="898" font-size="10" fill="#00897b" font-style="italic">After=network-online.target nm-wait-online-initrd   Before=dracut-initqueue.service   TimeoutStartSec=infinity</text>
+  <text x="84" y="920" font-size="11" fill="#333">1. Load libnvdimm / nd_e820 + appended nd_btt / nd_pmem; wait for /dev/tpmrm0 and /dev/pmem0 (4.2 GiB above 4 GiB)</text>
+  <text x="84" y="937" font-size="11" fill="#333">2. Generate SSH host keys → /run/fdo/ssh-host-keys (Go crypto, no ssh-keygen); capture device IP</text>
+  <text x="84" y="954" font-size="11" fill="#333">3. go-fdo-endpoint: TO1 → TO2 with credential reuse (owner address from the TPM credential's RV info)</text>
+  <rect x="100" y="962" width="410" height="24" rx="5" fill="#fff8e1" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="110" y="978" font-size="10.5" font-weight="bold" fill="#f57f17">← Payload FSIM: Agama profile → /run/fdo/agama/profile.json</text>
+  <rect x="520" y="962" width="320" height="24" rx="5" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="530" y="978" font-size="10.5" font-weight="bold" fill="#6a1b9a">→ Credentials FSIM: SSH public keys + IP</text>
+  <rect x="100" y="992" width="410" height="24" rx="5" fill="#ebf0e1" stroke="#669900" stroke-width="1.5"/>
+  <text x="110" y="1008" font-size="10.5" font-weight="bold" fill="#669900">← Payload FSIM: full offline ISO (4.2 GiB) streamed → /dev/pmem0</text>
+  <text x="520" y="1008" font-size="9" fill="#888">← = server to device     → = device to server</text>
+  <text x="84" y="1036" font-size="11" fill="#333">4. Verify /dev/pmem0 is ISO9660 with label Install-Leap-16.0-x86_64 (else emergency shell)</text>
+  <text x="84" y="1053" font-size="11" fill="#333">5. No hand-off code: inst.auto=file:///run/fdo/agama/profile.json is already on the cmdline</text>
+  <text x="100" y="1069" font-size="10" fill="#555">→ Agama's dracut hook saved it to /run/agama/cmdline.d; agama-autoinstall reads the file after switch_root</text>
+  <text x="84" y="1086" font-size="11" fill="#333">6. udevadm trigger + settle until /dev/disk/by-label/Install-Leap-16.0-x86_64 exists</text>
+
+  <rect x="74" y="1104" width="786" height="24" rx="5" fill="#ffffff" stroke="#e0a0a0" stroke-width="1"/>
+  <text x="84" y="1120" font-size="10.5" fill="#333"><tspan font-weight="bold" fill="#c62828">dracut-initqueue</tspan>  dmsquash-live mounts the ISO on /dev/pmem0 and LiveOS/squashfs.img as the live root (rd.retry starts only now)</text>
+  <rect x="74" y="1132" width="786" height="24" rx="5" fill="#ffffff" stroke="#e0a0a0" stroke-width="1"/>
+  <text x="84" y="1148" font-size="10.5" fill="#333"><tspan font-weight="bold" fill="#c62828">switch_root</tspan>  into the Agama live system; /run is carried over (profile.json, ssh-host-keys); medium at /run/initramfs/live</text>
+
+  <line x1="479" y1="1163" x2="479" y2="1183" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Stage 3 -->
+  <rect x="62" y="1187" width="818" height="124" rx="10" fill="#ffffff" stroke="#669900" stroke-width="1.5"/>
+  <rect x="63" y="1188" width="816" height="22" rx="9" fill="#ebf0e1"/>
+  <text x="80" y="1204" font-size="13" font-weight="bold" fill="#424242">Stage 3: OS Installation</text>
+  <text x="262" y="1204" font-size="11" fill="#888">(Agama + profile, no FDO involvement)</text>
+  <text x="80" y="1228" font-size="11" fill="#333">agama-autoinstall loads /run/fdo/agama/profile.json; unattended (inst.finish=poweroff)</text>
+  <text x="80" y="1245" font-size="11" fill="#333">storage: biggest disk &gt; 16 GiB (never pmem*, never the small FDO EFI disk); product default btrfs + swap</text>
+  <text x="80" y="1262" font-size="11" fill="#333">Packages come from /run/initramfs/live/install on /dev/pmem0 — offline, nothing from the network</text>
+  <text x="80" y="1279" font-size="11" fill="#333">post script (chroot: false): copy /run/fdo/ssh-host-keys → /mnt/etc/ssh</text>
+  <text x="80" y="1296" font-size="11" fill="#333">post script (chroot): 0600/0644 + restorecon, user key, NOPASSWD sudo, key-only sshd, drop installer-only kernel args</text>
+
+  <line x1="479" y1="1311" x2="479" y2="1331" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Result -->
+  <rect x="140" y="1335" width="680" height="70" rx="10" fill="#e8f5e9" stroke="#43a047" stroke-width="2"/>
+  <text x="480" y="1358" text-anchor="middle" font-size="14" font-weight="bold" fill="#2e7d32">Installed openSUSE Leap 16.0</text>
+  <text x="480" y="1376" text-anchor="middle" font-size="11" fill="#333">FDO-provisioned SSH host keys (no TOFU)  •  SELinux enforcing  •  configured via Agama profile</text>
+  <text x="480" y="1393" text-anchor="middle" font-size="11" fill="#333">No cloud-init; ssh-keygen -A only creates missing keys  •  Server holds the public keys for verified first SSH</text>
+
+  <!-- ════════════════ COLORED TRACE LINES ════════════════ -->
+  <!-- BLUE: UKI -> Stage 1 BMO -->
+  <path d="M 100,547 V 634 H 36 V 742 H 72" stroke="#1565c0" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-blue)"/>
+  <text x="-735" y="46" font-size="8" font-weight="bold" fill="#1565c0" transform="rotate(-90)">UKI via BMO</text>
+  <!-- AMBER: Agama profile -> Stage 2 -->
+  <path d="M 350,547 V 627 H 26 V 974 H 98" stroke="#f57f17" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-amber)"/>
+  <text x="-940" y="35" font-size="8" font-weight="bold" fill="#f57f17" transform="rotate(-90)">profile via Payload</text>
+  <!-- GREEN: ISO -> Stage 2 -->
+  <path d="M 235,547 V 620 H 16 V 1004 H 98" stroke="#669900" stroke-width="2.5" fill="none" stroke-dasharray="8,4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-green)"/>
+  <text x="-990" y="25" font-size="8" font-weight="bold" fill="#669900" transform="rotate(-90)">ISO via Payload FSIM</text>
+  <!-- PURPLE: credentials -> SSH key store -->
+  <path d="M 842,974 H 900 V 522 H 869" stroke="#6a1b9a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-purple)"/>
+  <text x="760" y="-904" font-size="8" font-weight="bold" fill="#6a1b9a" transform="rotate(90)">SSH via Credentials</text>
+
+  <!-- ════════════════ COLOR LEGEND ════════════════ -->
+  <rect x="20" y="1428" width="880" height="42" rx="6" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+  <rect x="35" y="1434" width="12" height="12" rx="2" fill="#ffcdd2" stroke="#e57373"/>
+  <text x="52" y="1444" font-size="9" font-weight="bold" fill="#555">initrd / kernel</text>
+  <text x="125" y="1444" font-size="8" fill="#888">(from vendor ISO, unmodified)</text>
+  <rect x="270" y="1434" width="12" height="12" rx="2" fill="#e0f2f1" stroke="#00897b"/>
+  <text x="287" y="1444" font-size="9" font-weight="bold" fill="#555">FDO overlay</text>
+  <text x="350" y="1444" font-size="8" fill="#888">(appended to initrd)</text>
+  <rect x="470" y="1434" width="12" height="12" rx="2" fill="#fff" stroke="#e0a0a0"/>
+  <text x="487" y="1444" font-size="9" font-weight="bold" fill="#555">dracut / systemd step</text>
+  <text x="600" y="1444" font-size="8" fill="#888">(stock openSUSE behaviour)</text>
+  <rect x="35" y="1452" width="12" height="12" rx="2" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="52" y="1462" font-size="9" font-weight="bold" fill="#555">UKI</text>
+  <text x="75" y="1462" font-size="8" fill="#888">(BMO)</text>
+  <rect x="130" y="1452" width="12" height="12" rx="2" fill="#ebf0e1" stroke="#669900"/>
+  <text x="147" y="1462" font-size="9" font-weight="bold" fill="#555">Full ISO</text>
+  <text x="190" y="1462" font-size="8" fill="#888">(Payload → /dev/pmem0)</text>
+  <rect x="300" y="1452" width="12" height="12" rx="2" fill="#fff8e1" stroke="#f57f17"/>
+  <text x="317" y="1462" font-size="9" font-weight="bold" fill="#555">Per-Device</text>
+  <text x="377" y="1462" font-size="8" fill="#888">(profile + OV + RV blob)</text>
+  <rect x="490" y="1452" width="12" height="12" rx="2" fill="#f3e5f5" stroke="#6a1b9a"/>
+  <text x="507" y="1462" font-size="9" font-weight="bold" fill="#555">Negotiated</text>
+  <text x="566" y="1462" font-size="8" fill="#888">(SSH keys)</text>
+</svg>
