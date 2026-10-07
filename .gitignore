@@ -7,3 +7,4 @@ build-opensuse/
 firmware/
 golden/
 *.efi
+build-ros2/

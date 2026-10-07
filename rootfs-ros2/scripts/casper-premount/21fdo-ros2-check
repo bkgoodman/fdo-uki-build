@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# Runs right after 20fdo-receive (TO2 done, ISO on /dev/pmem0). Fails early if
+# the ROS 2 apt bundle payload did not arrive, rather than letting Subiquity
+# fail late in its late-commands.
+
+PREREQ=""
+
+prereqs()
+{
+    echo "$PREREQ"
+}
+
+case "$1" in
+prereqs)
+    prereqs
+    exit 0
+    ;;
+esac
+
+. /scripts/functions
+
+BUNDLE=/run/fdo/ros2/ros2-bundle.tar
+
+log_begin_msg "Checking FDO-delivered ROS 2 apt bundle"
+
+if [ ! -s "$BUNDLE" ]; then
+    echo "FDO installer error: ROS 2 apt bundle was not received ($BUNDLE)" >&2
+    /bin/sh
+    exit 1
+fi
+
+# POSIX tar archives carry "ustar" at offset 257 of the first header.
+if [ "$(dd if="$BUNDLE" bs=1 skip=257 count=5 2>/dev/null)" != "ustar" ]; then
+    echo "FDO installer error: $BUNDLE is not a tar archive" >&2
+    /bin/sh
+    exit 1
+fi
+
+echo "FDO: ROS 2 apt bundle present ($(stat -c %s "$BUNDLE") bytes)"
+log_end_msg

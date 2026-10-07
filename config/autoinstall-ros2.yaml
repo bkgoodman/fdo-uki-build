@@ -1,0 +1,56 @@
+autoinstall:
+  version: 1
+  refresh-installer:
+    update: false
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+  identity:
+    hostname: fdo-ros2
+    username: fdo
+    # Password: "fdo" (hashed)
+    password: "$6$FDO.SALT$rD0sGDQl0UONZCEGST2cf5KpVgjN8Cb6ETtvFLDHA.fCWqM4u6Jj6l6XG5XUlave7lGunXO3RMPb.In/oKbqR/"
+    realname: "FDO ROS 2 Device User"
+  ssh:
+    install-server: true
+    allow-pw: false
+    authorized-keys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIECb1b7JjbIThvin1gum8LH5ctWoCCKGuUsyAQoa3ko3 fdo-onboarding"
+  storage:
+    layout:
+      name: direct
+  # Install-time updates come from the same Ubuntu snapshot the ROS 2 bundle was
+  # resolved against (UBUNTU_SNAPSHOT_URL in config/ros2-installer.env), so the
+  # target is never newer than the bundle. A late-command restores the normal
+  # archive for the installed system. Unreachable mirror -> offline install.
+  apt:
+    geoip: false
+    mirror-selection:
+      primary:
+        - arches: [amd64]
+          uri: http://snapshot.ubuntu.com/ubuntu/20261002T040000Z
+    security:
+      - arches: [amd64]
+        uri: http://snapshot.ubuntu.com/ubuntu/20261002T040000Z
+  late-commands:
+    # Create fdo user with sudo access without password
+    - curtin in-target --target=/target -- sh -c 'echo "fdo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-fdo-user'
+    - curtin in-target --target=/target -- sh -c 'chmod 0440 /etc/sudoers.d/90-fdo-user'
+    # Ensure SSH password auth is disabled
+    - curtin in-target --target=/target -- sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+    # Copy SSH host keys from installer to target (generated during FDO onboarding)
+    - "sh -c 'if [ -d /run/fdo/ssh-host-keys ]; then cp -a /run/fdo/ssh-host-keys/* /target/etc/ssh/ && chmod 600 /target/etc/ssh/ssh_host_*_key && chmod 644 /target/etc/ssh/ssh_host_*.pub; fi'"
+    # Prevent cloud-init from deleting/regenerating SSH host keys on first boot.
+    - "sh -c 'printf \"ssh_deletekeys: false\\nssh_genkeytypes: []\\n\" > /target/etc/cloud/cloud.cfg.d/99-fdo-preserve-ssh-keys.cfg'"
+    # ROS 2: unpack the FDO-delivered offline apt bundle into the target and install from it (no network)
+    - "sh -c 'mkdir -p /target/var/lib/fdo-ros2 && tar -xf /run/fdo/ros2/ros2-bundle.tar -C /target/var/lib/fdo-ros2'"
+    - curtin in-target --target=/target -- sh /var/lib/fdo-ros2/install-ros2-bundle.sh
+    # Point the installed system back at the normal Ubuntu archive (+ security pocket) for future updates.
+    # Only ubuntu.sources is rewritten, inside the target: ros2.sources is an absolute symlink.
+    - |
+      curtin in-target --target=/target -- sh -c 'printf "%s\n" "Types: deb" "URIs: http://archive.ubuntu.com/ubuntu" "Suites: resolute resolute-updates resolute-backports" "Components: main restricted universe multiverse" "Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg" "" "Types: deb" "URIs: http://security.ubuntu.com/ubuntu" "Suites: resolute-security" "Components: main restricted universe multiverse" "Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg" > /etc/apt/sources.list.d/ubuntu.sources'
+    # ROS 2 environment for the fdo user's interactive shells
+    - "sh -c 'echo \"source /opt/ros/lyrical/setup.bash\" >> /target/home/fdo/.bashrc'"
+    # Mark installation complete
+    - curtin in-target --target=/target -- sh -c 'echo FDO_AUTOINSTALL_COMPLETE > /var/lib/fdo-autoinstall-complete'
+  shutdown: poweroff

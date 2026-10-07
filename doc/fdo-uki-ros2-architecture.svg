@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 1586" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#555"/></marker>
+    <marker id="arr-blue" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#1565c0"/></marker>
+    <marker id="arr-green" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#669900"/></marker>
+    <marker id="arr-amber" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#f57f17"/></marker>
+    <marker id="arr-purple" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#6a1b9a"/></marker>
+    <marker id="arr-teal" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#00897b"/></marker>
+    <marker id="arr-indigo" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#3949ab"/></marker>
+    <!-- "What's inside the UKI": kernel | repacked initrd with the FDO overlay inside (63 x 8, origin top-left) -->
+    <g id="uki-parts">
+      <rect x="0" y="0" width="24" height="8" rx="1.3" fill="#ffcdd2" stroke="#e57373" stroke-width="1.2"/>
+      <rect x="27" y="0" width="36" height="8" rx="1.3" fill="#ffcdd2" stroke="#e57373" stroke-width="1.2"/>
+      <rect x="51" y="1.6" width="10" height="4.8" rx="1" fill="#e0f2f1" stroke="#00897b" stroke-width="1"/>
+    </g>
+  </defs>
+
+  <!-- ════════════════ BUILD-TIME PREPARATION ════════════════ -->
+  <rect x="10" y="10" width="900" height="420" rx="14" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="460" y="36" text-anchor="middle" font-size="14" font-weight="bold" fill="#424242" letter-spacing="1">BUILD-TIME PREPARATION — build-ros2-installer-uki.sh</text>
+  <text x="460" y="52" text-anchor="middle" font-size="10" fill="#888" font-style="italic">ROS 2 is not an OS: Ubuntu 26.04 is its Tier 1 platform. Same Ubuntu installer path, plus one offline ROS 2 apt bundle</text>
+
+  <!-- Vendor ISO (coral) -->
+  <rect x="40" y="64" width="260" height="104" rx="8" fill="#fce4ec" stroke="#e57373" stroke-width="1.5"/>
+  <text x="170" y="84" text-anchor="middle" font-size="13" font-weight="bold" fill="#c62828">Ubuntu 26.04.1 Live Server ISO</text>
+  <text x="170" y="100" text-anchor="middle" font-size="8" fill="#666" font-family="monospace">ubuntu-26.04.1-live-server-amd64.iso</text>
+  <text x="170" y="116" text-anchor="middle" font-size="11" fill="#666">kernel + initrd (casper/)</text>
+  <text x="170" y="131" text-anchor="middle" font-size="11" fill="#666">squashfs layers: minimal + server</text>
+  <text x="170" y="146" text-anchor="middle" font-size="11" fill="#666">installed-base dpkg status (server layer)</text>
+  <text x="170" y="161" text-anchor="middle" font-size="9" fill="#999">2.7 GiB  •  pinned SHA-256, size, codename resolute</text>
+
+  <!-- FDO overlay (teal) -->
+  <rect x="320" y="64" width="280" height="104" rx="8" fill="#e0f2f1" stroke="#00897b" stroke-width="1.5"/>
+  <text x="460" y="84" text-anchor="middle" font-size="13" font-weight="bold" fill="#00695c">FDO overlay</text>
+  <text x="460" y="102" text-anchor="middle" font-size="10.5" fill="#666">go-fdo-endpoint (static, -tags=tpm) + keygen</text>
+  <text x="460" y="117" text-anchor="middle" font-size="10.5" fill="#666">casper-premount/20fdo-receive, 21fdo-ros2-check</text>
+  <text x="460" y="132" text-anchor="middle" font-size="10.5" fill="#666">casper-bottom/62fdo-autoinstall</text>
+  <text x="460" y="147" text-anchor="middle" font-size="10.5" fill="#666">etc/fdo/config.yaml (+ ROS 2 bundle MIME type)</text>
+  <text x="460" y="161" text-anchor="middle" font-size="9" fill="#999">rootfs-installer/ (Ubuntu hooks) + rootfs-ros2/</text>
+
+  <!-- ROS 2 snapshots (indigo) -->
+  <rect x="620" y="64" width="260" height="104" rx="8" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.5"/>
+  <text x="750" y="84" text-anchor="middle" font-size="13" font-weight="bold" fill="#283593">ROS 2 Lyrical package sources</text>
+  <text x="750" y="100" text-anchor="middle" font-size="8" fill="#666" font-family="monospace">snapshots.ros.org/lyrical/2026-09-18</text>
+  <text x="750" y="113" text-anchor="middle" font-size="8" fill="#666" font-family="monospace">snapshot.ubuntu.com/ubuntu/20261002T040000Z</text>
+  <text x="750" y="130" text-anchor="middle" font-size="10.5" fill="#666">immutable, signed indexes (key fpr pinned)</text>
+  <text x="750" y="145" text-anchor="middle" font-size="10.5" fill="#666">ros-base + demo-nodes-cpp / -py</text>
+  <text x="750" y="161" text-anchor="middle" font-size="9" fill="#999">+ ros2-apt-source 1.3.0 (SHA-256 pinned)</text>
+
+  <!-- extract arrows -->
+  <line x1="85" y1="168" x2="85" y2="194" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="215" y1="168" x2="215" y2="194" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="122" y="186" font-size="10" fill="#555">extract</text>
+  <!-- installed-base status -> resolver (dashed) -->
+  <path d="M 290,168 V 184 H 700 V 196" stroke="#999" stroke-width="1" stroke-dasharray="4,3" fill="none" marker-end="url(#arr)"/>
+  <text x="520" y="180" font-size="9" fill="#999">installed-base dpkg status</text>
+
+  <!-- kernel / initrd chips -->
+  <rect x="40" y="198" width="90" height="40" rx="5" fill="#ffcdd2" stroke="#e57373" stroke-width="1.5"/>
+  <text x="85" y="215" text-anchor="middle" font-size="11" font-weight="bold" fill="#c62828">vmlinuz</text>
+  <text x="85" y="230" text-anchor="middle" font-size="9" fill="#c62828">7.0.0-30 • 17 MiB</text>
+  <rect x="140" y="198" width="190" height="40" rx="5" fill="#ffcdd2" stroke="#e57373" stroke-width="1.5"/>
+  <text x="235" y="215" text-anchor="middle" font-size="11" font-weight="bold" fill="#c62828">initrd: unpack, add, repack</text>
+  <text x="235" y="230" text-anchor="middle" font-size="9" fill="#c62828">early ‖ early2 ‖ main (gzip) • 90 MiB</text>
+  <path d="M 460,168 L 460,210 Q 460,218 450,218 L 334,218" stroke="#00897b" stroke-width="1.5" fill="none" marker-end="url(#arr-teal)"/>
+  <text x="395" y="211" text-anchor="middle" font-size="9.5" fill="#00897b" font-weight="bold">into main/ + ORDER</text>
+
+  <!-- bundle resolve chip -->
+  <line x1="750" y1="168" x2="750" y2="194" stroke="#3949ab" stroke-width="1.5" marker-end="url(#arr-indigo)"/>
+  <rect x="620" y="198" width="260" height="40" rx="5" fill="#c5cae9" stroke="#3949ab" stroke-width="1.5"/>
+  <text x="750" y="215" text-anchor="middle" font-size="11" font-weight="bold" fill="#283593">apt resolve ×2, download (verified)</text>
+  <text x="750" y="230" text-anchor="middle" font-size="9" fill="#283593">empty system ∪ ISO base → 467 .debs</text>
+
+  <!-- "same file" dashed link (drawn first so the objcopy box covers it) -->
+  <path d="M 300,150 L 308,150 L 308,338 L 300,338" stroke="#999" stroke-width="1" stroke-dasharray="4,3" fill="none" marker-end="url(#arr)"/>
+
+  <!-- objcopy -->
+  <rect x="40" y="252" width="560" height="34" rx="4" fill="#f2f2f2" stroke="#d8d8d8" stroke-width="1.5"/>
+  <text x="320" y="273" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#757575">objcopy: EFI stub + .osrel (Ubuntu 26.04.1) + .cmdline + .linux + .initrd (repacked)</text>
+  <line x1="85" y1="238" x2="85" y2="250" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+  <line x1="235" y1="238" x2="235" y2="250" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <!-- cmdline -->
+  <rect x="320" y="296" width="280" height="58" rx="6" fill="#ffffff" stroke="#bdbdbd" stroke-width="1.2"/>
+  <text x="330" y="310" font-size="10" font-weight="bold" fill="#616161">.cmdline (computed)</text>
+  <text x="330" y="323" font-size="8.5" fill="#444" font-family="monospace">boot=casper ip=dhcp live-media=/dev/pmem0</text>
+  <text x="330" y="335" font-size="8.5" fill="#444" font-family="monospace">memmap=2796M!4G initramfs.runsize=50%</text>
+  <text x="330" y="347" font-size="8.5" fill="#444" font-family="monospace">autoinstall subiquity.autoinstallpath=…</text>
+  <line x1="460" y1="296" x2="460" y2="289" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <!-- bundle assembly -->
+  <line x1="750" y1="238" x2="750" y2="248" stroke="#3949ab" stroke-width="1.2" marker-end="url(#arr-indigo)"/>
+  <rect x="620" y="250" width="260" height="58" rx="6" fill="#ffffff" stroke="#3949ab" stroke-width="1.2"/>
+  <text x="750" y="266" text-anchor="middle" font-size="10" font-weight="bold" fill="#283593">local apt repo (Packages, Release)</text>
+  <text x="750" y="281" text-anchor="middle" font-size="9.5" fill="#555">+ MANIFEST, SHA256SUMS, install-ros2-bundle.sh</text>
+  <text x="750" y="296" text-anchor="middle" font-size="9.5" fill="#555">tar --sort=name --mtime=@0 → byte-reproducible</text>
+
+  <!-- outputs -->
+  <line x1="100" y1="286" x2="100" y2="312" stroke="#1565c0" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+  <rect x="38" y="316" width="125" height="44" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="100" y="331" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565c0">UKI (.efi)</text>
+  <use href="#uki-parts" x="68.5" y="336"/>
+  <text x="100" y="355" text-anchor="middle" font-size="9" fill="#1565c0">106 MiB</text>
+  <rect x="173" y="316" width="125" height="44" rx="8" fill="#ebf0e1" stroke="#669900" stroke-width="2"/>
+  <text x="235" y="335" text-anchor="middle" font-size="11" font-weight="bold" fill="#669900">Full Vendor ISO</text>
+  <text x="235" y="351" text-anchor="middle" font-size="9" fill="#669900">(kept intact)</text>
+  <line x1="750" y1="308" x2="750" y2="314" stroke="#3949ab" stroke-width="1.5" marker-end="url(#arr-indigo)"/>
+  <rect x="688" y="316" width="125" height="44" rx="8" fill="#e8eaf6" stroke="#3949ab" stroke-width="2"/>
+  <text x="750" y="333" text-anchor="middle" font-size="11" font-weight="bold" fill="#283593">ROS 2 bundle (.tar)</text>
+  <text x="750" y="350" text-anchor="middle" font-size="9" fill="#283593">132 MiB • 467 .debs</text>
+
+  <!-- build checks -->
+  <rect x="320" y="364" width="280" height="60" rx="6" fill="#fffde7" stroke="#e0d38a" stroke-width="1"/>
+  <text x="330" y="378" font-size="10" font-weight="bold" fill="#6d5d00">Build-time checks (fail loudly)</text>
+  <text x="330" y="391" font-size="8.5" fill="#555">• ISO SHA-256 / size / codename; casper ORDER anchors</text>
+  <text x="330" y="403" font-size="8.5" fill="#555">• snapshot key fingerprint; every .deb hash-checked</text>
+  <text x="330" y="415" font-size="8.5" fill="#555">• offline install simulated onto empty + ISO base</text>
+  <text x="625" y="384" font-size="9" fill="#888" font-style="italic">Two resolutions: the full closure, plus the</text>
+  <text x="625" y="397" font-size="9" fill="#888" font-style="italic">co-upgrades the ISO's base needs (e.g. uuid-dev</text>
+  <text x="625" y="410" font-size="9" fill="#888" font-style="italic">pins libuuid1 (=) → util-linux upgrade too)</text>
+
+  <!-- ════════════════ FDO SERVER ════════════════ -->
+  <rect x="10" y="450" width="900" height="250" rx="14" fill="#fafafa" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="460" y="472" text-anchor="middle" font-size="14" font-weight="bold" fill="#626262" letter-spacing="1">FDO SERVER (go-fdo)</text>
+  <line x1="100" y1="360" x2="100" y2="535" stroke="#1565c0" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+  <line x1="235" y1="360" x2="235" y2="535" stroke="#669900" stroke-width="1.5" marker-end="url(#arr-green)"/>
+  <line x1="750" y1="360" x2="750" y2="520" stroke="#3949ab" stroke-width="1.5" marker-end="url(#arr-indigo)"/>
+
+  <!-- Column 1: static OS -->
+  <rect x="25" y="482" width="285" height="210" rx="8" fill="#eff5f8" stroke="#90caf9" stroke-width="1"/>
+  <text x="167" y="500" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565c0">Static OS Image</text>
+  <text x="167" y="514" text-anchor="middle" font-size="9" fill="#555">Same for all devices of this type</text>
+  <text x="167" y="527" text-anchor="middle" font-size="9" fill="#888" font-style="italic">Same UKI build path and ISO as the Ubuntu installer</text>
+  <rect x="38" y="537" width="125" height="50" rx="5" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="100" y="550" text-anchor="middle" font-size="11" font-weight="bold" fill="#1565c0">UKI</text>
+  <use href="#uki-parts" x="68.5" y="554"/>
+  <text x="100" y="573" text-anchor="middle" font-size="9" font-weight="bold" fill="#1565c0">BMO FSIM</text>
+  <text x="100" y="583" text-anchor="middle" font-size="7" fill="#1565c0" font-family="monospace">application/x-uefi-image</text>
+  <rect x="173" y="537" width="125" height="50" rx="5" fill="#ebf0e1" stroke="#669900" stroke-width="1.5"/>
+  <text x="235" y="557" text-anchor="middle" font-size="11" font-weight="bold" fill="#669900">Full ISO</text>
+  <text x="235" y="571" text-anchor="middle" font-size="9" font-weight="bold" fill="#669900">Payload FSIM</text>
+  <text x="235" y="582" text-anchor="middle" font-size="7" fill="#669900" font-family="monospace">application/x-iso9660-image</text>
+  <text x="100" y="600" text-anchor="middle" font-size="8" fill="#1565c0">↓ delivers to Stage 1</text>
+  <text x="235" y="600" text-anchor="middle" font-size="8" fill="#669900">↓ delivers to Stage 2 (3rd)</text>
+
+  <!-- Column 2: per-device -->
+  <rect x="320" y="482" width="280" height="210" rx="8" fill="#fff8e1" stroke="#ffe082" stroke-width="1"/>
+  <text x="460" y="500" text-anchor="middle" font-size="12" font-weight="bold" fill="#f57f17">Per-Device</text>
+  <text x="460" y="514" text-anchor="middle" font-size="9" fill="#555">Specific to each device being onboarded</text>
+  <text x="394" y="530" text-anchor="middle" font-size="9" font-weight="bold" fill="#f57f17">from user / operator</text>
+  <text x="526" y="530" text-anchor="middle" font-size="9" font-weight="bold" fill="#f57f17">from device vendor (DI)</text>
+  <rect x="333" y="537" width="122" height="50" rx="5" fill="#ffffff" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="394" y="554" text-anchor="middle" font-size="11" font-weight="bold" fill="#f57f17">Autoinstall YAML</text>
+  <text x="394" y="568" text-anchor="middle" font-size="9" font-weight="bold" fill="#f57f17">Payload FSIM</text>
+  <text x="394" y="581" text-anchor="middle" font-size="6.5" fill="#f57f17" font-family="monospace">vnd.canonical.autoinstall+yaml</text>
+  <rect x="465" y="537" width="122" height="50" rx="5" fill="#ffffff" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="526" y="554" text-anchor="middle" font-size="11" font-weight="bold" fill="#f57f17">Ownership</text>
+  <text x="526" y="568" text-anchor="middle" font-size="11" font-weight="bold" fill="#f57f17">Voucher</text>
+  <text x="526" y="581" text-anchor="middle" font-size="8" fill="#f57f17">FDO protocol</text>
+  <text x="394" y="600" text-anchor="middle" font-size="8" fill="#f57f17">↓ delivers to Stage 2 (1st)</text>
+  <text x="526" y="600" text-anchor="middle" font-size="8" fill="#f57f17">↓ used in Stage 1 + 2</text>
+  <rect x="348" y="610" width="239" height="32" rx="5" fill="#ffffff" stroke="#f57f17" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="467" y="623" text-anchor="middle" font-size="9" font-weight="bold" fill="#f57f17">RV blob (TO0): owner's TO2 address</text>
+  <text x="467" y="636" text-anchor="middle" font-size="8" fill="#555">both stages run TO1 → TO2; no address in the UKI</text>
+  <text x="460" y="664" text-anchor="middle" font-size="8.5" fill="#555">hostname, user, SSH authorized key, ROS 2 install steps</text>
+  <text x="460" y="678" text-anchor="middle" font-size="8.5" fill="#555">(config/autoinstall-ros2.yaml)</text>
+
+  <!-- Column 3a: static app layer -->
+  <rect x="610" y="482" width="285" height="112" rx="8" fill="#eef0fa" stroke="#9fa8da" stroke-width="1"/>
+  <text x="752" y="500" text-anchor="middle" font-size="12" font-weight="bold" fill="#283593">Static App Layer (ROS 2)</text>
+  <text x="752" y="514" text-anchor="middle" font-size="9" fill="#555">Same for all ROS 2 devices; rebuilt per snapshot</text>
+  <rect x="637" y="522" width="230" height="46" rx="5" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.5"/>
+  <text x="752" y="538" text-anchor="middle" font-size="11" font-weight="bold" fill="#283593">ROS 2 apt bundle</text>
+  <text x="752" y="551" text-anchor="middle" font-size="9" font-weight="bold" fill="#283593">Payload FSIM</text>
+  <text x="752" y="562" text-anchor="middle" font-size="7" fill="#283593" font-family="monospace">application/vnd.ros2.apt-bundle+tar</text>
+  <text x="752" y="584" text-anchor="middle" font-size="8" fill="#283593">↓ delivers to Stage 2 (2nd)</text>
+
+  <!-- Column 3b: negotiated -->
+  <rect x="610" y="600" width="285" height="92" rx="8" fill="#f3e5f5" stroke="#ce93d8" stroke-width="1"/>
+  <text x="752" y="616" text-anchor="middle" font-size="12" font-weight="bold" fill="#6a1b9a">Negotiated State</text>
+  <rect x="637" y="624" width="230" height="34" rx="5" fill="#ffffff" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="752" y="638" text-anchor="middle" font-size="11" font-weight="bold" fill="#6a1b9a">SSH Key Store</text>
+  <text x="752" y="651" text-anchor="middle" font-size="9" font-weight="bold" fill="#6a1b9a">Credentials FSIM</text>
+  <text x="752" y="672" text-anchor="middle" font-size="8.5" fill="#555">↑ from Stage 2: ed25519 / ecdsa / rsa keys + IP</text>
+  <text x="752" y="686" text-anchor="middle" font-size="8.5" fill="#555">→ known_hosts for a verified first connection</text>
+
+  <!-- ════════════════ DEVICE ONBOARDING ════════════════ -->
+  <rect x="48" y="720" width="862" height="800" rx="13" fill="#fafafa" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="479" y="742" text-anchor="middle" font-size="14" font-weight="bold" fill="#424242" letter-spacing="1">DEVICE ONBOARDING</text>
+
+  <!-- Stage 1 -->
+  <rect x="62" y="752" width="818" height="92" rx="10" fill="#ffffff" stroke="#bdbdbd" stroke-width="1.5"/>
+  <rect x="63" y="753" width="816" height="22" rx="9" fill="#eeeeee"/>
+  <text x="80" y="769" font-size="13" font-weight="bold" fill="#424242">Stage 1: UEFI Boot</text>
+  <text x="220" y="769" font-size="11" fill="#888">(fdo-uefi-rs)</text>
+  <text x="74" y="793" font-size="11" fill="#333">TO1 (to1d verified) → TO2 with TPM credential; voucher chain and owner signature verified</text>
+  <rect x="74" y="803" width="420" height="28" rx="5" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="84" y="821" font-size="11" font-weight="bold" fill="#1565c0">← BMO FSIM: UKI (106 MiB, SHA-256 checked)</text>
+  <text x="506" y="821" font-size="11" fill="#333">then chainloads it via LoadImage / StartImage</text>
+  <line x1="479" y1="844" x2="479" y2="864" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="487" y="859" font-size="10" fill="#555">chainload</text>
+  <use href="#uki-parts" x="408" y="851"/>
+
+  <!-- Stage 2 (coral: this IS the initrd) -->
+  <rect x="62" y="868" width="818" height="364" rx="10" fill="#fce4ec" stroke="#e57373" stroke-width="2"/>
+  <rect x="63" y="869" width="816" height="22" rx="9" fill="#ffcdd2"/>
+  <text x="80" y="885" font-size="13" font-weight="bold" fill="#c62828">Stage 2: Ubuntu casper initramfs</text>
+  <text x="370" y="885" font-size="11" fill="#c62828" font-style="italic">← the vendor initrd, repacked with the FDO overlay inside</text>
+
+  <rect x="74" y="899" width="786" height="24" rx="5" fill="#ffffff" stroke="#e0a0a0" stroke-width="1"/>
+  <text x="84" y="915" font-size="10.5" fill="#333"><tspan font-weight="bold" fill="#c62828">/init</tspan>  /run tmpfs size=50% of RAM (initramfs.runsize=50%; default 10%), room for the bundle; pmem region from memmap=</text>
+
+  <!-- 20fdo-receive (teal) -->
+  <rect x="74" y="929" width="786" height="181" rx="8" fill="#e0f2f1" stroke="#00897b" stroke-width="2"/>
+  <rect x="75" y="930" width="784" height="20" rx="7" fill="#b2dfdb"/>
+  <text x="86" y="945" font-size="12" font-weight="bold" fill="#00695c">casper-premount/20fdo-receive</text>
+  <text x="316" y="945" font-size="10" fill="#00897b" font-style="italic">before 20iso_scan in casper's ORDER file (same hook as the Ubuntu path)</text>
+  <text x="84" y="967" font-size="11" fill="#333">1. modprobe libnvdimm nd_pmem isofs; configure_networking (DHCP); wait for /dev/tpmrm0 and /dev/pmem0 (2.7 GiB)</text>
+  <text x="84" y="984" font-size="11" fill="#333">2. Generate SSH host keys → /run/fdo/ssh-host-keys (Go crypto, no ssh-keygen); capture device IP</text>
+  <text x="84" y="1001" font-size="11" fill="#333">3. go-fdo-endpoint: TO1 → TO2 with credential reuse (owner address from the TPM credential's RV info)</text>
+  <rect x="100" y="1009" width="410" height="24" rx="5" fill="#fff8e1" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="110" y="1025" font-size="10.5" font-weight="bold" fill="#f57f17">← Payload FSIM: autoinstall → /run/fdo/autoinstall/user-data</text>
+  <rect x="520" y="1009" width="320" height="24" rx="5" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="530" y="1025" font-size="10.5" font-weight="bold" fill="#6a1b9a">→ Credentials FSIM: SSH public keys + IP</text>
+  <rect x="100" y="1039" width="410" height="24" rx="5" fill="#ebf0e1" stroke="#669900" stroke-width="1.5"/>
+  <text x="110" y="1055" font-size="10.5" font-weight="bold" fill="#669900">← Payload FSIM: full ISO (2.7 GiB) streamed → /dev/pmem0</text>
+  <rect x="520" y="1039" width="320" height="24" rx="5" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.5"/>
+  <text x="530" y="1055" font-size="10.5" font-weight="bold" fill="#283593">← Payload: ROS 2 bundle → /run/fdo/ros2/…tar</text>
+  <text x="84" y="1083" font-size="11" fill="#333">4. Check the autoinstall arrived and /dev/pmem0 is ISO9660 (else emergency shell)</text>
+  <text x="520" y="1100" font-size="9" fill="#888">← = server to device     → = device to server</text>
+
+  <rect x="74" y="1116" width="786" height="24" rx="5" fill="#e0f2f1" stroke="#00897b" stroke-width="1"/>
+  <text x="84" y="1132" font-size="10.5" fill="#333"><tspan font-weight="bold" fill="#00695c">casper-premount/21fdo-ros2-check</tspan>  the ROS 2 bundle is present and a tar archive (else emergency shell, before any install work)</text>
+  <rect x="74" y="1144" width="786" height="24" rx="5" fill="#ffffff" stroke="#e0a0a0" stroke-width="1"/>
+  <text x="84" y="1160" font-size="10.5" fill="#333"><tspan font-weight="bold" fill="#c62828">casper-premount/20iso_scan</tspan>  live-media=/dev/pmem0: casper mounts the ISO9660 and the squashfs layers as the live root</text>
+  <rect x="74" y="1172" width="786" height="24" rx="5" fill="#e0f2f1" stroke="#00897b" stroke-width="1"/>
+  <text x="84" y="1188" font-size="10.5" fill="#333"><tspan font-weight="bold" fill="#00695c">casper-bottom/62fdo-autoinstall</tspan>  copies user-data → /autoinstall.yaml in the live root</text>
+  <rect x="74" y="1200" width="786" height="24" rx="5" fill="#ffffff" stroke="#e0a0a0" stroke-width="1"/>
+  <text x="84" y="1216" font-size="10.5" fill="#333"><tspan font-weight="bold" fill="#c62828">run-init</tspan>  /run is moved into the live root: autoinstall, SSH host keys and the ROS 2 bundle survive</text>
+
+  <line x1="479" y1="1232" x2="479" y2="1252" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Stage 3 -->
+  <rect x="62" y="1256" width="818" height="158" rx="10" fill="#ffffff" stroke="#669900" stroke-width="1.5"/>
+  <rect x="63" y="1257" width="816" height="22" rx="9" fill="#ebf0e1"/>
+  <text x="80" y="1273" font-size="13" font-weight="bold" fill="#424242">Stage 3: OS + ROS 2 Installation</text>
+  <text x="345" y="1273" font-size="11" fill="#888">(Subiquity + curtin, no FDO involvement)</text>
+  <text x="80" y="1297" font-size="11" fill="#333">Subiquity reads /autoinstall.yaml (subiquity.autoinstallpath); storage layout direct → the largest disk</text>
+  <text x="80" y="1314" font-size="11" fill="#333">apt mirror pinned to snapshot.ubuntu.com/…/20261002T040000Z: install-time updates are never newer than the bundle</text>
+  <text x="80" y="1331" font-size="11" fill="#333">late-commands: FDO SSH host keys → /target/etc/ssh; cloud-init keeps them; NOPASSWD sudo; key-only sshd</text>
+  <rect x="74" y="1339" width="786" height="42" rx="5" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.5"/>
+  <text x="84" y="1355" font-size="10.5" font-weight="bold" fill="#283593">late-commands: untar the bundle → /target/var/lib/fdo-ros2; run install-ros2-bundle.sh in the target:</text>
+  <text x="84" y="1372" font-size="10.5" fill="#333">SHA256SUMS → apt-get install from the bundle repo only (own source list + lists dir: no network) → ros2-apt-source</text>
+  <text x="80" y="1400" font-size="11" fill="#333">restore archive.ubuntu.com in the target; source /opt/ros/lyrical/setup.bash in ~fdo/.bashrc; marker; poweroff</text>
+
+  <line x1="479" y1="1414" x2="479" y2="1434" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Result -->
+  <rect x="140" y="1438" width="680" height="70" rx="10" fill="#e8f5e9" stroke="#43a047" stroke-width="2"/>
+  <text x="480" y="1461" text-anchor="middle" font-size="14" font-weight="bold" fill="#2e7d32">Installed Ubuntu 26.04.1 LTS + ROS 2 Lyrical Luth</text>
+  <text x="480" y="1479" text-anchor="middle" font-size="11" fill="#333">ros-base + demo nodes from a pinned snapshot  •  FDO-provisioned SSH host keys (no TOFU)</text>
+  <text x="480" y="1496" text-anchor="middle" font-size="11" fill="#333">Official ROS apt source configured for later updates  •  Server holds the public keys for verified first SSH</text>
+
+  <!-- ════════════════ COLORED TRACE LINES ════════════════ -->
+  <!-- GREEN: ISO -> Stage 2 -->
+  <path d="M 235,587 V 704 H 16 V 1051 H 98" stroke="#669900" stroke-width="2.5" fill="none" stroke-dasharray="8,4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-green)"/>
+  <text x="-1040" y="25" font-size="8" font-weight="bold" fill="#669900" transform="rotate(-90)">ISO via Payload FSIM</text>
+  <!-- AMBER: autoinstall -> Stage 2 -->
+  <path d="M 340,587 V 710 H 26 V 1021 H 98" stroke="#f57f17" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-amber)"/>
+  <text x="-945" y="35" font-size="8" font-weight="bold" fill="#f57f17" transform="rotate(-90)">autoinstall via Payload</text>
+  <!-- BLUE: UKI -> Stage 1 BMO -->
+  <path d="M 100,587 V 716 H 36 V 817 H 72" stroke="#1565c0" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-blue)"/>
+  <text x="-812" y="46" font-size="8" font-weight="bold" fill="#1565c0" transform="rotate(-90)">UKI via BMO</text>
+  <!-- INDIGO: ROS 2 bundle -> Stage 2 -->
+  <path d="M 867,545 H 905 V 1051 H 842" stroke="#3949ab" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-indigo)"/>
+  <text x="780" y="-909" font-size="8" font-weight="bold" fill="#3949ab" transform="rotate(90)">ROS 2 bundle via Payload</text>
+  <!-- PURPLE: credentials -> SSH key store -->
+  <path d="M 842,1021 H 890 V 641 H 869" stroke="#6a1b9a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-purple)"/>
+  <text x="900" y="-894" font-size="8" font-weight="bold" fill="#6a1b9a" transform="rotate(90)">SSH via Credentials</text>
+
+  <!-- ════════════════ COLOR LEGEND ════════════════ -->
+  <rect x="20" y="1532" width="880" height="44" rx="6" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+  <rect x="35" y="1538" width="12" height="12" rx="2" fill="#ffcdd2" stroke="#e57373"/>
+  <text x="52" y="1548" font-size="9" font-weight="bold" fill="#555">initrd / kernel</text>
+  <text x="125" y="1548" font-size="8" fill="#888">(from vendor ISO)</text>
+  <rect x="230" y="1538" width="12" height="12" rx="2" fill="#e0f2f1" stroke="#00897b"/>
+  <text x="247" y="1548" font-size="9" font-weight="bold" fill="#555">FDO overlay</text>
+  <text x="314" y="1548" font-size="8" fill="#888">(added to the initrd's main archive)</text>
+  <rect x="470" y="1538" width="12" height="12" rx="2" fill="#fff" stroke="#e0a0a0"/>
+  <text x="487" y="1548" font-size="9" font-weight="bold" fill="#555">casper / initramfs step</text>
+  <text x="610" y="1548" font-size="8" fill="#888">(stock Ubuntu behaviour)</text>
+  <rect x="35" y="1557" width="12" height="12" rx="2" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="52" y="1567" font-size="9" font-weight="bold" fill="#555">UKI</text>
+  <text x="75" y="1567" font-size="8" fill="#888">(BMO)</text>
+  <rect x="115" y="1557" width="12" height="12" rx="2" fill="#ebf0e1" stroke="#669900"/>
+  <text x="132" y="1567" font-size="9" font-weight="bold" fill="#555">Full ISO</text>
+  <text x="175" y="1567" font-size="8" fill="#888">(Payload → /dev/pmem0)</text>
+  <rect x="280" y="1557" width="12" height="12" rx="2" fill="#e8eaf6" stroke="#3949ab"/>
+  <text x="297" y="1567" font-size="9" font-weight="bold" fill="#555">ROS 2 bundle</text>
+  <text x="370" y="1567" font-size="8" fill="#888">(Payload → /run)</text>
+  <rect x="450" y="1557" width="12" height="12" rx="2" fill="#fff8e1" stroke="#f57f17"/>
+  <text x="467" y="1567" font-size="9" font-weight="bold" fill="#555">Per-Device</text>
+  <text x="527" y="1567" font-size="8" fill="#888">(autoinstall + OV + RV blob)</text>
+  <rect x="660" y="1557" width="12" height="12" rx="2" fill="#f3e5f5" stroke="#6a1b9a"/>
+  <text x="677" y="1567" font-size="9" font-weight="bold" fill="#555">Negotiated</text>
+  <text x="736" y="1567" font-size="8" fill="#888">(SSH keys)</text>
+</svg>

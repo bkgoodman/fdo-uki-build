@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 850" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#555"/></marker>
+    <marker id="arr-blue" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#1565c0"/></marker>
+    <marker id="arr-green" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#669900"/></marker>
+    <marker id="arr-amber" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#f57f17"/></marker>
+    <marker id="arr-purple" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#6a1b9a"/></marker>
+    <marker id="arr-teal" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#00897b"/></marker>
+    <!-- "What's inside the UKI": vendor kernel | vendor initrd with the FDO agent (63 x 8) -->
+    <g id="uki-parts">
+      <rect x="0" y="0" width="24" height="8" rx="1.3" fill="#ffcdd2" stroke="#e57373" stroke-width="1.2"/>
+      <rect x="27" y="0" width="36" height="8" rx="1.3" fill="#ffcdd2" stroke="#e57373" stroke-width="1.2"/>
+      <rect x="51" y="1.6" width="10" height="4.8" rx="1" fill="#e0f2f1" stroke="#00897b" stroke-width="1"/>
+    </g>
+  </defs>
+
+  <text x="460" y="34" text-anchor="middle" font-size="19" font-weight="bold" fill="#333">FDO + UKI: zero-touch install on bare metal</text>
+  <text x="460" y="54" text-anchor="middle" font-size="11.5" fill="#777">The same three stages for every OS. Only the stock installer at the end changes.</text>
+
+  <!-- ════════════════ BUILD ════════════════ -->
+  <rect x="10" y="70" width="900" height="170" rx="14" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="460" y="94" text-anchor="middle" font-size="14" font-weight="bold" fill="#424242" letter-spacing="1">BUILD (once per OS release)</text>
+
+  <rect x="40" y="108" width="190" height="52" rx="8" fill="#fce4ec" stroke="#e57373" stroke-width="1.5"/>
+  <text x="135" y="130" text-anchor="middle" font-size="13" font-weight="bold" fill="#c62828">Vendor installer ISO</text>
+  <text x="135" y="148" text-anchor="middle" font-size="10.5" fill="#666">unmodified, as published</text>
+  <line x1="230" y1="134" x2="276" y2="134" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="253" y="127" text-anchor="middle" font-size="10" fill="#555">extract</text>
+
+  <rect x="280" y="108" width="200" height="52" rx="6" fill="#ffcdd2" stroke="#e57373" stroke-width="1.5"/>
+  <text x="380" y="130" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#c62828">its kernel + initrd</text>
+  <text x="380" y="148" text-anchor="middle" font-size="10.5" fill="#c62828">the vendor's own boot files</text>
+  <text x="500" y="141" text-anchor="middle" font-size="18" font-weight="bold" fill="#555">+</text>
+  <rect x="520" y="108" width="200" height="52" rx="6" fill="#e0f2f1" stroke="#00897b" stroke-width="1.5"/>
+  <text x="620" y="130" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#00695c">FDO agent + hook</text>
+  <text x="620" y="148" text-anchor="middle" font-size="10.5" fill="#00695c">go-fdo-endpoint, added to the initrd</text>
+  <text x="815" y="130" text-anchor="middle" font-size="10" fill="#888" font-style="italic">Future: the OS</text>
+  <text x="815" y="144" text-anchor="middle" font-size="10" fill="#888" font-style="italic">vendor ships the</text>
+  <text x="815" y="158" text-anchor="middle" font-size="10" fill="#888" font-style="italic">UKI; skip this step</text>
+
+  <!-- pack into UKI -->
+  <path d="M 620,160 V 174 H 280 V 182" stroke="#555" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+  <line x1="380" y1="160" x2="380" y2="174" stroke="#555" stroke-width="1.5"/>
+  <text x="630" y="178" font-size="10" fill="#555">pack into one EFI binary</text>
+  <!-- ISO kept -->
+  <line x1="115" y1="160" x2="115" y2="182" stroke="#999" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+
+  <rect x="40" y="186" width="150" height="44" rx="8" fill="#ebf0e1" stroke="#669900" stroke-width="2"/>
+  <text x="115" y="205" text-anchor="middle" font-size="12" font-weight="bold" fill="#669900">OS ISO</text>
+  <text x="115" y="221" text-anchor="middle" font-size="9.5" fill="#669900">(kept intact)</text>
+  <rect x="205" y="186" width="150" height="44" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="280" y="203" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565c0">UKI (.efi)</text>
+  <use href="#uki-parts" x="248.5" y="212"/>
+
+  <!-- ════════════════ OWNER ════════════════ -->
+  <rect x="10" y="260" width="900" height="150" rx="14" fill="#fafafa" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="460" y="284" text-anchor="middle" font-size="14" font-weight="bold" fill="#626262" letter-spacing="1">OWNER — FDO server</text>
+  <line x1="115" y1="230" x2="115" y2="300" stroke="#669900" stroke-width="1.5" marker-end="url(#arr-green)"/>
+  <line x1="280" y1="230" x2="280" y2="300" stroke="#1565c0" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+
+  <rect x="40" y="302" width="150" height="62" rx="6" fill="#ebf0e1" stroke="#669900" stroke-width="1.5"/>
+  <text x="115" y="324" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#669900">OS ISO</text>
+  <text x="115" y="341" text-anchor="middle" font-size="9.5" fill="#669900" font-family="monospace">fdo.payload</text>
+  <text x="115" y="356" text-anchor="middle" font-size="9.5" fill="#555">every device</text>
+  <rect x="205" y="302" width="150" height="62" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="280" y="324" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#1565c0">UKI</text>
+  <text x="280" y="341" text-anchor="middle" font-size="9.5" fill="#1565c0" font-family="monospace">fdo.bmo</text>
+  <text x="280" y="356" text-anchor="middle" font-size="9.5" fill="#555">every device</text>
+  <rect x="370" y="302" width="170" height="62" rx="6" fill="#fff8e1" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="455" y="324" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#f57f17">OS config</text>
+  <text x="455" y="341" text-anchor="middle" font-size="9.5" fill="#f57f17" font-family="monospace">fdo.payload</text>
+  <text x="455" y="356" text-anchor="middle" font-size="9.5" fill="#555">per device</text>
+  <rect x="555" y="302" width="140" height="62" rx="6" fill="#fff8e1" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="625" y="324" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#f57f17">Voucher</text>
+  <text x="625" y="341" text-anchor="middle" font-size="9.5" fill="#f57f17">FDO protocol</text>
+  <text x="625" y="356" text-anchor="middle" font-size="9.5" fill="#555">per device</text>
+  <rect x="710" y="302" width="170" height="62" rx="6" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="795" y="324" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#6a1b9a">SSH host keys</text>
+  <text x="795" y="341" text-anchor="middle" font-size="9.5" fill="#6a1b9a" font-family="monospace">fdo.credentials</text>
+  <text x="795" y="356" text-anchor="middle" font-size="9.5" fill="#555">learned from the device</text>
+  <text x="455" y="388" text-anchor="middle" font-size="10" fill="#888" font-style="italic">autoinstall · kickstart · Agama profile</text>
+
+  <!-- ════════════════ DEVICE ════════════════ -->
+  <rect x="48" y="430" width="862" height="380" rx="13" fill="#fafafa" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="479" y="454" text-anchor="middle" font-size="14" font-weight="bold" fill="#424242" letter-spacing="1">DEVICE — UEFI firmware + TPM, nothing installed</text>
+
+  <!-- Stage 1 -->
+  <rect x="62" y="466" width="818" height="66" rx="10" fill="#ffffff" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="80" y="488" font-size="13.5" font-weight="bold" fill="#424242">1 · Firmware</text>
+  <text x="180" y="488" font-size="11" fill="#888">UEFI FDO client proves the device's identity with its TPM</text>
+  <rect x="80" y="498" width="250" height="26" rx="5" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="92" y="515" font-size="11.5" font-weight="bold" fill="#1565c0">← UKI</text>
+  <use href="#uki-parts" x="250" y="507"/>
+  <text x="345" y="515" font-size="11.5" fill="#333">check its hash, boot it</text>
+  <line x1="479" y1="532" x2="479" y2="550" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Stage 2 -->
+  <rect x="62" y="554" width="818" height="98" rx="10" fill="#fce4ec" stroke="#e57373" stroke-width="2"/>
+  <text x="80" y="576" font-size="13.5" font-weight="bold" fill="#c62828">2 · Installer boot</text>
+  <text x="212" y="576" font-size="11" fill="#c62828" font-style="italic">the FDO agent in the initrd runs FDO again, same TPM identity</text>
+  <rect x="80" y="588" width="370" height="24" rx="5" fill="#fff8e1" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="92" y="604" font-size="11.5" font-weight="bold" fill="#f57f17">← OS config</text>
+  <rect x="80" y="618" width="370" height="24" rx="5" fill="#ebf0e1" stroke="#669900" stroke-width="1.5"/>
+  <text x="92" y="634" font-size="11.5" font-weight="bold" fill="#669900">← OS ISO, streamed into a RAM disk</text>
+  <rect x="470" y="588" width="390" height="24" rx="5" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="482" y="604" font-size="11.5" font-weight="bold" fill="#6a1b9a">→ SSH host public keys (made right here)</text>
+  <text x="482" y="634" font-size="10" fill="#888">← = owner to device     → = device to owner</text>
+  <line x1="479" y1="652" x2="479" y2="670" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Stage 3 -->
+  <rect x="62" y="674" width="818" height="56" rx="10" fill="#ffffff" stroke="#669900" stroke-width="1.5"/>
+  <text x="80" y="696" font-size="13.5" font-weight="bold" fill="#424242">3 · Stock installer</text>
+  <text x="222" y="696" font-size="11" fill="#888">no FDO: the vendor's own installer, unattended</text>
+  <text x="80" y="719" font-size="11.5" fill="#333">Subiquity (Ubuntu, ROS 2) · Anaconda (Fedora) · Agama (openSUSE)  —  installs from the ISO, keeps the FDO host keys</text>
+  <line x1="479" y1="730" x2="479" y2="748" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Result -->
+  <rect x="170" y="752" width="620" height="48" rx="10" fill="#e8f5e9" stroke="#43a047" stroke-width="2"/>
+  <text x="480" y="773" text-anchor="middle" font-size="14" font-weight="bold" fill="#2e7d32">Installed OS</text>
+  <text x="480" y="791" text-anchor="middle" font-size="11" fill="#333">The owner already knows its SSH host keys: the first login is verified, no "trust on first use"</text>
+
+  <!-- ════════════════ TRACE LINES ════════════════ -->
+  <!-- GREEN: ISO -> Stage 2 -->
+  <path d="M 115,364 V 414 H 16 V 630 H 78" stroke="#669900" stroke-width="2.5" fill="none" stroke-dasharray="8,4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-green)"/>
+  <!-- AMBER: OS config -> Stage 2 -->
+  <path d="M 400,364 V 420 H 26 V 600 H 78" stroke="#f57f17" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-amber)"/>
+  <!-- BLUE: UKI -> Stage 1 -->
+  <path d="M 280,364 V 424 H 36 V 511 H 78" stroke="#1565c0" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-blue)"/>
+  <!-- PURPLE: SSH keys -> owner -->
+  <path d="M 862,600 H 898 V 333 H 882" stroke="#6a1b9a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-purple)"/>
+
+  <!-- ════════════════ LEGEND ════════════════ -->
+  <rect x="20" y="818" width="880" height="26" rx="6" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+  <rect x="35" y="825" width="12" height="12" rx="2" fill="#ffcdd2" stroke="#e57373"/>
+  <text x="52" y="835" font-size="9.5" fill="#555">vendor kernel / initrd</text>
+  <rect x="170" y="825" width="12" height="12" rx="2" fill="#e0f2f1" stroke="#00897b"/>
+  <text x="187" y="835" font-size="9.5" fill="#555">FDO agent</text>
+  <rect x="265" y="825" width="12" height="12" rx="2" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="282" y="835" font-size="9.5" fill="#555">UKI (BMO)</text>
+  <rect x="360" y="825" width="12" height="12" rx="2" fill="#ebf0e1" stroke="#669900"/>
+  <text x="377" y="835" font-size="9.5" fill="#555">OS ISO (payload)</text>
+  <rect x="480" y="825" width="12" height="12" rx="2" fill="#fff8e1" stroke="#f57f17"/>
+  <text x="497" y="835" font-size="9.5" fill="#555">per-device config</text>
+  <rect x="610" y="825" width="12" height="12" rx="2" fill="#f3e5f5" stroke="#6a1b9a"/>
+  <text x="627" y="835" font-size="9.5" fill="#555">SSH host keys (credentials)</text>
+</svg>
