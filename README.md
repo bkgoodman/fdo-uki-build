@@ -17,7 +17,7 @@ Each target has its own guide, with a detailed architecture diagram, build steps
 | **openSUSE Leap 16.0** offline | Agama (live ISO) | Agama JSON profile | 125 MiB / 4.2 GiB | 2026-10-05 | [README-OPENSUSE.md](README-OPENSUSE.md) |
 | **ROS 2 Lyrical** on Ubuntu 26.04.1 | Subiquity + offline ROS 2 apt bundle | autoinstall YAML | 106 MiB / 2.7 GiB + 132 MiB bundle | 2026-10-07 | [README-ROS2.md](README-ROS2.md) |
 
-Every target has a `TEST-<OS>-UKI.md` (findings, hashes, timings) and a `TODO-<OS>-UKI.md` (phased work tracker).
+Every target has a `TEST-<OS>-UKI.md` (findings, hashes, timings) and a `TODO-<OS>-UKI.md` (phased work tracker). Work that applies to all targets is in [TODO.md](TODO.md).
 
 ## How It Works
 
@@ -102,6 +102,7 @@ DEPLOY=1 DEPLOY_HOST=<test-host> ./build-<os>-installer-uki.sh
 - `config/`: pinned ISO URLs/hashes (`*-installer.env`) and test configs (autoinstall, kickstart, Agama profile)
 - `rootfs-*/`: the files each builder adds to the vendor initramfs
 - `README-<OS>.md`, `TEST-<OS>-UKI.md`, `TODO-<OS>-UKI.md`: per-target guide, results and work tracker
+- `TODO.md`: cross-cutting work tracker (all targets)
 - `doc/`: diagrams, plus the cross-cutting deep dives:
   - [doc/SSH-HOST-KEYS.md](doc/SSH-HOST-KEYS.md): TOFU, the Credentials FSIM exchange, connecting to an onboarded device
   - [doc/MANAGED-EDGE.md](doc/MANAGED-EDGE.md): BMO + OS install + management agent → fully managed edge system
