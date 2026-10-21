@@ -33,4 +33,9 @@ autoinstall:
     - "sh -c 'printf \"ssh_deletekeys: false\\nssh_genkeytypes: []\\n\" > /target/etc/cloud/cloud.cfg.d/99-fdo-preserve-ssh-keys.cfg'"
     # Mark installation complete
     - curtin in-target --target=/target -- sh -c 'echo FDO_AUTOINSTALL_COMPLETE > /var/lib/fdo-autoinstall-complete'
+    # Report success and the installer logs to the FDO Owner (always exits 0)
+    - sh /run/fdo/fdo-report install 0 "install complete"
+  # On failure, report the error and the installer logs to the FDO Owner
+  error-commands:
+    - sh /run/fdo/fdo-report install 2 "install failed"
   shutdown: poweroff

@@ -102,4 +102,12 @@ if ! blkid -p -s TYPE -o value /dev/pmem0 | grep -qx iso9660; then
 fi
 
 touch /run/fdo/installer-media.complete
+
+# Stage report mode for the installer's hooks. /run is moved into the live
+# root, so these survive the switch; autoinstall late-commands /
+# error-commands call /run/fdo/fdo-report to send logs and the outcome back
+# to the Owner (a new TO2 session with credential reuse).
+cp /usr/local/bin/fdo-endpoint /usr/local/bin/fdo-report /etc/fdo/config.yaml /run/fdo/
+chmod 0755 /run/fdo/fdo-endpoint /run/fdo/fdo-report
+
 log_end_msg

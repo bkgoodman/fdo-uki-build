@@ -91,6 +91,20 @@ The `test-installer-pe2.sh` script runs the full onboarding flow on a QEMU test 
 
 All paths are configurable via environment variables (`FDO_SERVER`, `FDO_QUICK_DI`, `FDO_EFI_DISK`, `FDO_FIRMWARE_DIR`). See the script header for details.
 
+### Install Reports (Back Channel)
+
+The Stage 2 endpoint only *stages* the autoinstall config and ISO, then exits; Subiquity runs afterwards. To tell the Owner how the install actually went, `20fdo-receive` stages `fdo-endpoint`, its config and the `fdo-report` helper in `/run/fdo`, and the test autoinstall config calls it from its hooks:
+
+```yaml
+  late-commands:
+    # ...
+    - sh /run/fdo/fdo-report install 0 "install complete"
+  error-commands:
+    - sh /run/fdo/fdo-report install 2 "install failed"
+```
+
+`fdo-report <phase> <outcome> <message> [file...]` runs a new TO2 session (credential reuse) in the endpoint's report mode: it sends the tail of the Subiquity/curtin logs and the journal as standalone `fdo.payload` logs and rejects every payload the Owner offers before any data is sent. It retries, logs to `/run/fdo/report.log`, and always exits 0 so it can never fail the install. The test harness runs the server with `-payload-log-dir`; reports land in `$WORKDIR/reports/<device-guid>/` and are printed at the end. `FORCE_FAIL=1 ./test-installer-pe2.sh` makes the first late-command fail, which exercises the `error-commands` path. Design and open items: `TODO.md` "v2: Install Back Channel".
+
 ### Boot Installed VM
 
 ```bash

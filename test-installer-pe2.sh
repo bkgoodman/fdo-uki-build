@@ -29,6 +29,10 @@ FIRMWARE_DIR="${FDO_FIRMWARE_DIR:-/tmp/fdo-firmware-server}"
 UKI="$FIRMWARE_DIR/ubuntu-26.04.1-live-server-fdo.efi"
 ISO="$FIRMWARE_DIR/ubuntu-26.04.1-live-server-amd64.iso"
 AUTOINSTALL="$FIRMWARE_DIR/autoinstall-test.yaml"
+# FORCE_FAIL=1 makes the install fail (a failing first late-command) so the
+# error-commands report path is exercised.
+FORCE_FAIL="${FORCE_FAIL:-0}"
+REPORT_DIR="$WORKDIR/reports"
 TARGET_DISK="$WORKDIR/target.qcow2"
 VNC_DISPLAY="${VNC_DISPLAY:-:3}"
 SSH_HOST_FWD="${SSH_HOST_FWD:-2222}"
@@ -42,7 +46,10 @@ for f in "$SERVER" "$QUICK_DI" "$EFI_DISK" "$UKI" "$ISO" "$AUTOINSTALL"; do
 done
 
 echo "=== Cleanup ==="
-sudo killall -9 swtpm server-installer qemu-system-x86_64 2>/dev/null || true
+# Only processes from earlier runs of this harness (their paths contain
+# /tmp/fdo-installer-test-): never other VMs or swtpm instances on the host.
+# ([/] keeps the pattern from matching this pkill's own sudo parent.)
+sudo pkill -9 -f '[/]tmp/fdo-installer-test-' 2>/dev/null || true
 sleep 1
 rm -rf "$WORKDIR" "$VOUCHER_DIR"
 mkdir -p "$WORKDIR" "$VOUCHER_DIR"
@@ -75,9 +82,16 @@ VOUCHER=$(ls -t "$VOUCHER_DIR"/*.fdoov | head -1)
 sed -i "s/FDO OWNERSHIP VOUCHER/OWNERSHIP VOUCHER/g" "$VOUCHER"
 "$SERVER" server -db "$WORKDIR/fdo.db" -import-voucher "$VOUCHER" -initOnly
 
+if [ "$FORCE_FAIL" = "1" ]; then
+    sed '/^  late-commands:/a\    - "false"  # FORCE_FAIL: exercise error-commands' "$AUTOINSTALL" > "$WORKDIR/autoinstall-test.yaml"
+    AUTOINSTALL="$WORKDIR/autoinstall-test.yaml"
+    echo "FORCE_FAIL=1: install will fail at the first late-command"
+fi
+
 "$SERVER" server -http 0.0.0.0:8080 -db "$WORKDIR/fdo.db" -reuse-cred \
     -bmo "application/x-uefi-image:$UKI" \
     -payload "application/vnd.canonical.autoinstall+yaml:$AUTOINSTALL" \
+    -payload-log-dir "$REPORT_DIR" \
     -payload "application/x-iso9660-image:$ISO" \
     -request-pubkey "device_info:device_info" \
     > "$WORKDIR/server.log" 2>&1 &
@@ -86,6 +100,20 @@ sleep 2
 
 if ! kill -0 "$SERVER_PID" 2>/dev/null; then
     cat "$WORKDIR/server.log"
+    exit 1
+fi
+
+# TO0: register the RV blob so the installer-initrd endpoint can run
+# TO1 -> TO2 (it has no RV-bypass fallback; without this, TO1 returns
+# "not found" and Stage 2 stops). The TO2 address must be the owner as seen
+# from the guest (QEMU user-net host). Same step as test-ros2-installer.sh.
+GUID=$(basename "$VOUCHER" .fdoov)
+echo "=== TO0: registering RV blob for $GUID ==="
+timeout 30 "$SERVER" server -db "$WORKDIR/fdo.db" -to0 http://127.0.0.1:8080 -to0-guid "$GUID" \
+    -ext-http "${FDO_EXT_HTTP:-10.0.2.2:8080}" > "$WORKDIR/to0.log" 2>&1 || true
+if ! grep -q "RV blob registered" "$WORKDIR/to0.log"; then
+    cat "$WORKDIR/to0.log"
+    echo "TO0 registration failed" >&2
     exit 1
 fi
 
@@ -119,6 +147,14 @@ echo "  - TPM state: $WORKDIR/tpm2-00.permall"
 echo ""
 echo "=== SSH host keys / IP address received by owner during TO2 ==="
 grep -A5 "Received public key registration" "$WORKDIR/server.log" || echo "  (none found - check server.log)"
+echo ""
+echo "=== Install reports received by owner (report mode) ==="
+grep "device report" "$WORKDIR/server.log" || echo "  (none found - check server.log)"
+for meta in "$REPORT_DIR"/*/*.json; do
+    [ -e "$meta" ] || continue
+    echo "--- ${meta%.json}"
+    cat "$meta"
+done
 echo ""
 echo "To clean up: rm -rf $WORKDIR"
 

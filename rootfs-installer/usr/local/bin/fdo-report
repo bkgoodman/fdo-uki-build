@@ -1,0 +1,88 @@
+#!/bin/sh
+#
+# fdo-report: return installer logs and an outcome to the FDO Owner.
+#
+# Runs the FDO endpoint in report mode: a new TO2 session (credential reuse)
+# that only sends standalone fdo.payload logs and rejects every payload the
+# Owner offers. Meant to be called from installer hooks, e.g. Subiquity
+# autoinstall late-commands / error-commands.
+#
+# Usage: fdo-report <phase> <outcome> <message> [file...]
+#   outcome: 0 = success, 1 = warning, 2 = error, -1 = not stated
+#   With no files, the default installer logs are sent.
+#
+# Always exits 0: a failed report must never fail (or re-fail) the install.
+#
+# /run is mounted noexec (initramfs-tools init), and casper moves that mount
+# into the live system, so neither this script nor the endpoint can be
+# executed from /run/fdo. Call it as "sh /run/fdo/fdo-report ..."; the
+# endpoint is copied to an executable temp directory before it is run.
+
+FDO_DIR="${FDO_DIR:-/run/fdo}"
+STAGED_ENDPOINT="$FDO_DIR/fdo-endpoint"
+CONFIG="$FDO_DIR/config.yaml"
+WORK="$FDO_DIR/report"
+LOG="$FDO_DIR/report.log"
+# Tail of each log to send; the end of an installer log is where failures are.
+TAIL_BYTES="${FDO_REPORT_TAIL_BYTES:-524288}"
+TRIES="${FDO_REPORT_TRIES:-3}"
+
+phase="${1:-install}"
+outcome="${2:--1}"
+message="${3:-}"
+[ "$#" -ge 3 ] && shift 3 || shift "$#"
+
+if [ "$#" -eq 0 ]; then
+    set -- /var/log/installer/subiquity-server-debug.log \
+        /var/log/installer/curtin-install.log \
+        /var/log/installer/subiquity-client-debug.log
+fi
+
+{
+    echo "=== fdo-report $(date -u +%Y-%m-%dT%H:%M:%SZ) phase=$phase outcome=$outcome message=$message"
+
+    if [ ! -r "$STAGED_ENDPOINT" ] || [ ! -r "$CONFIG" ]; then
+        echo "fdo-report: $STAGED_ENDPOINT or $CONFIG missing; cannot report"
+        exit 0
+    fi
+    BIN_DIR=$(mktemp -d /tmp/fdo-report.XXXXXX 2> /dev/null || mktemp -d /var/tmp/fdo-report.XXXXXX)
+    ENDPOINT="$BIN_DIR/fdo-endpoint"
+    if ! cp "$STAGED_ENDPOINT" "$ENDPOINT" || ! chmod 0755 "$ENDPOINT"; then
+        echo "fdo-report: cannot copy the endpoint to an executable location; cannot report"
+        exit 0
+    fi
+
+    mkdir -p "$WORK"
+    n=0
+    args=""
+    for f in "$@"; do
+        n=$((n + 1))
+        out="$WORK/$phase-$n-$(basename "$f")"
+        if [ -r "$f" ]; then
+            tail -c "$TAIL_BYTES" "$f" > "$out"
+        else
+            echo "fdo-report: $f not found" > "$out"
+        fi
+        args="$args -report $out"
+    done
+    if command -v journalctl > /dev/null 2>&1; then
+        journalctl -b --no-pager 2> /dev/null | tail -c "$TAIL_BYTES" > "$WORK/$phase-journal.log"
+        args="$args -report $WORK/$phase-journal.log"
+    fi
+
+    try=1
+    while [ "$try" -le "$TRIES" ]; do
+        # shellcheck disable=SC2086 # $args is a list of "-report file" pairs (paths have no spaces)
+        if "$ENDPOINT" -config "$CONFIG" $args \
+            -report-phase "$phase" -report-outcome "$outcome" -report-message "$message"; then
+            echo "fdo-report: delivered (attempt $try)"
+            exit 0
+        fi
+        echo "fdo-report: attempt $try failed"
+        try=$((try + 1))
+        sleep 5
+    done
+    echo "fdo-report: giving up after $TRIES attempts"
+} >> "$LOG" 2>&1
+
+exit 0

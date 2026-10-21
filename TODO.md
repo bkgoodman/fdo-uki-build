@@ -3,80 +3,126 @@
 Items that apply to every installer path (Ubuntu, Fedora, openSUSE, ROS 2).
 Per-target work stays in `TODO-<OS>-UKI.md`.
 
-## v2: Stage 2 Endpoint Stays Connected Until the Install Finishes
+## v2: Install Back Channel ("Report Mode")
 
-**Status:** idea, not designed. A big ask; recorded so it isn't lost.
+**Status:** Ubuntu PoC implemented 2026-10-14 (standalone logs per
+fdo-sim 0626e68). `rootfs-installer/usr/local/bin/fdo-report` is staged into
+`/run/fdo` by `20fdo-receive` and called from `config/autoinstall-test.yaml`
+`late-commands` (outcome 0) and `error-commands` (outcome 2); it runs
+`fdo-endpoint -report ...` (go-fdo-endpoint report mode).
+`test-installer-pe2.sh` collects reports with `-payload-log-dir` and has
+`FORCE_FAIL=1` for the failure path. Fedora / openSUSE / ROS 2 not wired yet.
+
+Verified on the QEMU test host (TCG, full 2.8 GB ISO inline):
+
+- 2026-10-19 success run: `late-commands` report, 4 logs (Subiquity server /
+  client debug, curtin, journal tail) stored per GUID with `outcome: 0`.
+- 2026-10-20 `FORCE_FAIL=1` run: `error-commands` report, 4 logs with
+  `outcome: 2` / "install failed", no `outcome: 0` report; the Subiquity log
+  and journal show the cause (`Late/run_user_supplied/command_0 ... 'false'
+  returned non-zero exit status 1`). The report session rejected both
+  payloads at `payload-ack` (code 3); no payload data was sent. Subiquity then
+  waits at its error screen; the harness has to be stopped by hand
+  (`sudo pkill -f '[q]emu-system-x86_64 .*fdo-installer-test-<ts>'`).
 
 ### Problem
 
 Today Stage 2's `go-fdo-endpoint` runs TO2, receives the install config and
-ISO, sends back SSH host keys and IP (Credentials FSIM), and exits. Only then
-does the vendor installer (Subiquity / Anaconda / Agama) run. So the Owner
-learns that the *media* arrived, never whether the *install* worked. If the
-install fails, its logs stay on the device console and are lost on the next
-power cycle.
+ISO, sends back SSH host keys and IP (Credentials FSIM), and exits. It only
+*stages* the payloads (`/run/fdo/autoinstall/user-data`, `/dev/pmem0`; see
+`rootfs-installer/scripts/casper-premount/20fdo-receive`). Only after it
+exits does the vendor installer (Subiquity / Anaconda / Agama) use them. So
+the Owner learns that the *media* arrived, never whether the *install*
+worked. If the install fails, its logs stay on the device console and are
+lost on the next power cycle.
 
 It's the same "already hung up" gap as Stage 1 firmware BMO (see
 `fdo-overview-docs/articles/fdo-bmo-already-hung-up.md`), one stage later.
 
-### Idea
+Being able to see, debug and inspect the install is a major advantage of
+FDO-driven installation over fire-and-forget PXE / HTTPS boot.
 
-Keep the endpoint (and its TO2 session) alive after the payloads that the
-installer needs have been delivered:
+### Design: report on the next contact
 
-1. Deliver the install config + ISO as today.
-2. Release the installer to start, while the endpoint keeps running in the
-   background with the TO2 session still open.
-3. Gather installer progress and logs and send them back to the Owner, e.g.
-   over the device-to-owner side of `fdo.payload` (`payload-log-*`).
-4. Detect install completion (success or failure), report a final result,
-   then finish TO2 (Done20 / DoneAck20) and exit.
+A device may re-run the endpoint **at any time, only to return data**:
 
-A side benefit: the end-of-TO2 credential decision (reuse / rotate /
-disable) would then come *after* the install outcome is known, rather than
-before.
+- A separate invocation ("report mode") runs TO2 with credential reuse,
+  runs only the payload FSIM, and **rejects every payload** the Owner
+  offers (at `payload-ack`, before any data is sent).
+- It sends the files it was told to send (command-line arguments) as
+  `payload-log-*` transfers, each with its own `content_type`, and exits.
+- The Owner accepts or declines each log as it sees fit
+  (`payload-log-ack [false, 5]` = not wanted).
 
-### Open questions / likely gaps
+When to call it is the implementation's choice. Examples:
 
-- [ ] **Logs not tied to a payload.** `payload-log-*` currently sends a
-      payload *handler's* output after that payload is applied
-      (go-fdo-endpoint `payload_diagnostics.go`, `README_Generic.md`
-      "Diagnostic Log Upload"; go-fdo `fsim/payload_device.go`, server
-      `-payload-log-dir`). Installer logs belong to no payload. Is a
-      "pending payload" that completes only at install end enough, or is
-      there an **FSIM gap** (e.g. a generic device-log or install-status
-      message)? Check against the specs in `fdo-sim/fsim-repository/`.
-- [ ] **Install result message.** How does the device report "install
-      succeeded / failed (code, reason)"? Reuse `payload-result` for a
-      sentinel payload, or define something new?
-- [ ] **Session lifetime.** An install takes ~10–30 min. Does the go-fdo
-      server's TO2 session survive that (session TTL, HTTP timeouts)? Is a
-      keepalive needed while the installer runs, and what does ServiceInfo
-      allow for "nothing to send yet"? Likely **server work**. Relates to the
-      advisory durations (`-payload-duration`, watchdog advisory in
-      `doc/REFERENCE.md`).
-- [ ] **Owner-side logic.** The server has to keep a session open with
-      nothing to send, store streamed logs, and record a final install
-      status. Likely **server work** in go-fdo `examples/cmd` (or the
-      onboarding service).
-- [ ] **Hand-off to the installer.** The endpoint currently blocks
-      `dracut-initqueue` / casper until media is ready. It would need to
-      signal "media ready", let the installer continue, and keep running
-      (forked or a second unit). Per-target plumbing for Subiquity,
-      Anaconda, and Agama.
-- [ ] **Detecting completion.** Per installer: exit status, log markers,
-      the completion marker the configs already write, and so on. It also
-      has to handle the installer's own poweroff/reboot: the endpoint must
-      finish TO2 before shutdown (a systemd shutdown-ordering dependency),
-      or the result is lost.
-- [ ] **Network and memory during install.** The installer may reconfigure
-      networking. The ISO is held in RAM-backed `/dev/pmem0`. Confirm the
-      endpoint's connection and memory use survive the install.
-- [ ] **Failure modes.** If the session drops mid-install, what does the
-      Owner record? Is the next contact (a re-run of Stage 1 or Stage 2) able
-      to send buffered logs, the same as the Stage 1 re-entry idea?
-- [ ] **Alternative to compare.** Instead of holding the session open,
-      persist install logs to the target disk and have the installed OS
-      (first-boot or management agent, `doc/MANAGED-EDGE.md`) report them in
-      a later TO2. Simpler on the protocol side; loses reporting when the
-      install never reaches first boot.
+- **Phase-specific:** at defined points in the install ("ISO mounted",
+  "SSH set up", ...), carrying that phase's output.
+- **When needed:** something went wrong (e.g. installer error hooks:
+  Subiquity `error-commands`, Anaconda `%onerror`).
+- **End of process:** one final dump (Subiquity `late-commands`, Anaconda
+  `%post`, Agama post scripts).
+
+Rejected alternative: keeping the Stage 2 endpoint and its TO2 session open
+until the install finishes. The endpoint would have to survive the switch to
+the installer's root filesystem, keep a session idle for 20+ minutes, and
+detect each installer's completion.
+
+### Possible later extension: real-time following
+
+Architecturally allowed, not planned: deliver the install config, then run
+report mode in parallel, following the installer's log/journal and sending
+records as they appear, exiting when the install ends. In this mode the
+device is in charge of transmission: it sends when it has data and
+otherwise waits, so it does not poll the Owner. The cost is idle gaps that
+the Owner's session / HTTP timeouts must tolerate. Owners may want to
+handle such logs as record streams rather than as a file.
+
+### Open items
+
+- [ ] **Spec: standalone diagnostic transfer.** `chunking-strategy.md`
+      "Diagnostic Payloads" defines `*-log` only inside a primary transfer
+      (before `*-result`). Report mode needs a device-initiated log not tied
+      to an owner payload, plus a terminal message so the Owner knows the
+      device is finished. **Drafted 2026-10-14 (uncommitted, for review):**
+      fdo-sim `chunking-strategy.md` "Standalone Diagnostic Transfers" (new
+      `*-log-result`, owner → device) and `fdo.payload.md` "Standalone
+      Diagnostics" (`payload_name` / `payload_version` correlation keys).
+      Reviewed 2026-10-19 (outcome in `*-log-end` status; `standalone: true`
+      required; owner-first race rule with ack reason 6 Busy); committed in
+      fdo-sim 0626e68 (2026-10-19).
+      Workaround that needs no spec change: the Owner offers a "report
+      request" payload (e.g. `application/vnd.fdo.install-report`) in every
+      session; normal phases reject it, report mode accepts it and answers
+      with `payload-log-*` + `payload-result`.
+- [ ] **Spec gap: owner abort of a log.** The owner can decline a log at
+      `*-log-ack`, but has no way to stop one in progress (e.g. an
+      open-ended, followed-live log that grows too large) short of failing
+      the session. Not addressed in the 2026-10-14 draft.
+- [ ] **Spec (informative): record-aligned logs.** Optional `*-log-begin`
+      metadata key `record_aligned` saying each chunk holds whole records, so
+      the Owner MAY process them as they arrive. `total_size` is already
+      optional (open-ended until `*-end`), and `content_type` already exists.
+      Drafted 2026-10-14 with the item above (chunking-strategy.md
+      "Record-Aligned Logs").
+- [x] **go-fdo-endpoint: report mode.** `-report <file>` (repeatable) plus
+      `-report-phase/-outcome/-message/-payload-name/-payload-version/
+      -max-size` (`report_mode.go`), unit-tested in `report_mode_test.go`
+      (incl. an in-memory run against go-fdo's owner; mutation-checked
+      2026-10-21). Still open: `SendOnSuccess` for
+      *nested* handler logs is only a struct field (`payload_diagnostics.go`).
+- [x] **go-fdo.** Standalone logs on both sides (`fsim/payload_owner.go`,
+      `fsim/payload_device.go`: `StandaloneLogs`, `ReportOnly`); example
+      server stores them per GUID with a `.json` sidecar; example client
+      `-payload-report`; `./test_examples.sh payload-log-standalone`.
+- [x] **fdo-uki-build plumbing (Ubuntu).** See Status above.
+- [ ] **Plumbing for the other targets:** Anaconda `%post` / `%onerror`
+      (Fedora), Agama post scripts (openSUSE), ROS 2 autoinstall.
+- [ ] **Owner correlation.** The Owner links a report to the device (GUID)
+      and to what was installed (payload name / version / hash).
+- [ ] **Failure modes.** A hard crash (kernel panic mid-install) sends no
+      report; the only signal is the device returning to Stage 1. Persisting
+      logs across a reboot needs persistent storage the installer
+      environment may not have.
+- [ ] **Later stages.** The installed OS (first boot or management agent,
+      `doc/MANAGED-EDGE.md`) can use the same report mode.
