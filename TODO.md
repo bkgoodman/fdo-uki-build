@@ -1,7 +1,26 @@
 # TODO: Cross-Cutting (All Targets)
 
-Items that apply to every installer path (Ubuntu, Fedora, openSUSE, ROS 2).
-Per-target work stays in `TODO-<OS>-UKI.md`.
+Items that apply to every installer path (Ubuntu, Fedora, openSUSE, ROS 2,
+Windows). Per-target work stays in `TODO-<OS>-UKI.md` / `TODO-WINDOWS.md`.
+
+## Stage 1 image size limits (fdo-uefi-rs)
+
+- [ ] **BMO URL delivery is capped at 512 MiB per image** in fdo-uefi-rs
+      (`tcp4_http.rs` `MAX_RESPONSE_BYTES`); every mode buffers the whole
+      image in RAM before chainloading. Linux UKIs here are 106–290 MB (fine).
+      The Windows UKI is 488 MiB (WinPE only; the Setup `boot.wim` version is
+      519.6 MiB and does **not** fit), leaving ~23 MiB for Stage 2 agents.
+      Inline delivery has no cap. Plan: `../fdo-uefi-rs/TODO.md` "BMO image
+      size limits". Until fixed: keep every UKI under 512 MiB, or use inline.
+- [ ] Inline BMO is ~40× slower when fdo-uefi-rs runs TO2 over QEMU's
+      iPXE e1000e EFI driver instead of virtio-net (~1 s vs ~20 ms per
+      round; a new connection every round). Harnesses with an extra Intel NIC
+      must give it `romfile=`. Possibly relevant to K800 transfer times.
+      `../fdo-uefi-rs/TODO.md` "Inline BMO is ~40× slower over QEMU's iPXE
+      e1000e driver".
+- [ ] Owner SQLite does ~20 `fdatasync` per message: keep harness work dirs
+      (DB) on tmpfs; on a spinning disk a chunk round costs ~0.5 s
+      (`../go-fdo/TODO.md` "Performance").
 
 ## v2: Install Back Channel ("Report Mode")
 
@@ -116,10 +135,20 @@ handle such logs as record streams rather than as a file.
       server stores them per GUID with a `.json` sidecar; example client
       `-payload-report`; `./test_examples.sh payload-log-standalone`.
 - [x] **fdo-uki-build plumbing (Ubuntu).** See Status above.
-- [ ] **Plumbing for the other targets:** Anaconda `%post` / `%onerror`
-      (Fedora), Agama post scripts (openSUSE), ROS 2 autoinstall.
-- [ ] **Owner correlation.** The Owner links a report to the device (GUID)
-      and to what was installed (payload name / version / hash).
+- [ ] **Plumbing for the other targets** (deferred 2026-10-21): Anaconda
+      `%post` / `%onerror` (Fedora), Agama post scripts (openSUSE), ROS 2
+      autoinstall. Same pattern as Ubuntu: stage `fdo-endpoint` + config +
+      `fdo-report` where the installer can reach them, call `fdo-report`
+      from the success and error hooks, extend each `test-<os>-installer.sh`
+      with `-payload-log-dir` and a forced-failure option.
+- [ ] **Owner correlation** (deferred 2026-10-21). Device GUID is done
+      (reports are stored per GUID). Still missing: which payload a report
+      is about. The endpoint already has `-report-payload-name` /
+      `-report-payload-version` and the Owner stores them in the `.json`
+      sidecar, but `fdo-report` never passes them, so they are empty. The
+      Stage 2 endpoint knows the autoinstall payload's name/version (from
+      `payload-begin`) but does not persist them; record them in `/run/fdo`
+      during Stage 2 and have `fdo-report` pass them. Optionally a hash.
 - [ ] **Failure modes.** A hard crash (kernel panic mid-install) sends no
       report; the only signal is the device returning to Stage 1. Persisting
       logs across a reboot needs persistent storage the installer

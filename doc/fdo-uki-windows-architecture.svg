@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 1545" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#555"/></marker>
+    <marker id="arr-blue" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#1565c0"/></marker>
+    <marker id="arr-green" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#669900"/></marker>
+    <marker id="arr-amber" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#f57f17"/></marker>
+    <marker id="arr-purple" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#6a1b9a"/></marker>
+    <marker id="arr-teal" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#00897b"/></marker>
+    <marker id="arr-slate" viewBox="0 0 10 6" refX="9" refY="3" markerWidth="9" markerHeight="5.4" orient="auto-start-reverse"><path d="M0,0 L10,3 L0,6z" fill="#78909c"/></marker>
+    <!-- "What's inside the Windows UKI": stub | wimboot | WinPE WIM | injected FDO files (63 x 8, origin top-left) -->
+    <g id="uki-parts">
+      <rect x="0" y="0" width="8" height="8" rx="1.3" fill="#eceff1" stroke="#78909c" stroke-width="1.2"/>
+      <rect x="10" y="0" width="8" height="8" rx="1.3" fill="#eceff1" stroke="#78909c" stroke-width="1.2"/>
+      <rect x="20" y="0" width="31" height="8" rx="1.3" fill="#ffcdd2" stroke="#e57373" stroke-width="1.2"/>
+      <rect x="53" y="0" width="10" height="8" rx="1.3" fill="#e0f2f1" stroke="#00897b" stroke-width="1.2"/>
+    </g>
+  </defs>
+
+  <!-- ════════════════ BUILD-TIME PREPARATION ════════════════ -->
+  <rect x="10" y="10" width="900" height="390" rx="14" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="460" y="36" text-anchor="middle" font-size="14" font-weight="bold" fill="#424242" letter-spacing="1">BUILD-TIME PREPARATION — Linux only: wimlib, mtools, objcopy</text>
+  <text x="460" y="52" text-anchor="middle" font-size="10" fill="#888" font-style="italic">No Windows build host, no ADK, no DISM on the build side. Future: the owner (licensed media) supplies UKI + install.wim</text>
+
+  <!-- Vendor ISO (coral) -->
+  <rect x="40" y="64" width="260" height="108" rx="8" fill="#fce4ec" stroke="#e57373" stroke-width="1.5"/>
+  <text x="170" y="84" text-anchor="middle" font-size="13" font-weight="bold" fill="#c62828">Windows Server 2025 Eval ISO</text>
+  <text x="170" y="99" text-anchor="middle" font-size="6.6" fill="#666" font-family="monospace">26100.1742.240906-0331…SERVER_EVAL_x64FRE_en-us.iso</text>
+  <text x="170" y="115" text-anchor="middle" font-size="11" fill="#666">sources/boot.wim: 1 = WinPE, 2 = Setup</text>
+  <text x="170" y="130" text-anchor="middle" font-size="11" fill="#666">sources/install.wim: 4 editions</text>
+  <text x="170" y="145" text-anchor="middle" font-size="11" fill="#666">UDF (ISO9660 side: README.TXT only)</text>
+  <text x="170" y="163" text-anchor="middle" font-size="9" fill="#999">5.6 GiB  •  SHA-256 pinned (config/)</text>
+
+  <!-- Build checks (gray) -->
+  <rect x="320" y="64" width="280" height="108" rx="8" fill="#ffffff" stroke="#bdbdbd" stroke-width="1.2"/>
+  <text x="460" y="84" text-anchor="middle" font-size="12" font-weight="bold" fill="#616161">Checked in Phase 0 (TEST-WINDOWS.md)</text>
+  <text x="332" y="102" font-size="10" fill="#555">• ISO SHA-256 + size; boot.wim / wimboot SHA-256</text>
+  <text x="332" y="117" font-size="10" fill="#555">• boot.wim has tbs.dll, tpm.sys, Win32_Tpm (TPM)</text>
+  <text x="332" y="132" font-size="10" fill="#555">• in-box drivers: e1000e / I350 / I219, NVMe, AHCI</text>
+  <text x="332" y="147" font-size="10" fill="#555">• install.wim has OpenSSH Server (sshd.exe)</text>
+  <text x="332" y="162" font-size="10" fill="#555">• wimboot v2.9.0 is Microsoft-signed (UEFI CA 2011)</text>
+
+  <!-- FDO files (teal) -->
+  <rect x="620" y="64" width="260" height="108" rx="8" fill="#e0f2f1" stroke="#00897b" stroke-width="1.5"/>
+  <text x="750" y="84" text-anchor="middle" font-size="13" font-weight="bold" fill="#00695c">FDO files (windows/stage2/)</text>
+  <text x="750" y="102" text-anchor="middle" font-size="10" fill="#666">fdo-endpoint.exe (GOOS=windows, -tags=tpm)</text>
+  <text x="750" y="117" text-anchor="middle" font-size="11" fill="#666">+ winpeshl.ini → fdo-stage2.cmd</text>
+  <text x="750" y="132" text-anchor="middle" font-size="11" fill="#666">+ fdo-endpoint.yaml (payload handlers)</text>
+  <text x="750" y="147" text-anchor="middle" font-size="11" fill="#666">+ SetupComplete.cmd (first boot)</text>
+  <text x="750" y="163" text-anchor="middle" font-size="9" fill="#999">CRLF text; injected at boot, never written into a WIM</text>
+
+  <!-- extract arrows -->
+  <line x1="110" y1="172" x2="110" y2="198" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="118" y="190" font-size="10" fill="#555">wimlib export boot.wim index 1</text>
+
+  <!-- chips: WinPE WIM | wimboot | winpe-uki-stub -->
+  <rect x="40" y="202" width="150" height="40" rx="5" fill="#ffcdd2" stroke="#e57373" stroke-width="1.5"/>
+  <text x="115" y="219" text-anchor="middle" font-size="11" font-weight="bold" fill="#c62828">WinPE WIM → boot.wim</text>
+  <text x="115" y="234" text-anchor="middle" font-size="9" fill="#c62828">index 1 • 483 MiB</text>
+  <rect x="200" y="202" width="110" height="40" rx="5" fill="#eceff1" stroke="#78909c" stroke-width="1.5"/>
+  <text x="255" y="219" text-anchor="middle" font-size="11" font-weight="bold" fill="#455a64">wimboot</text>
+  <text x="255" y="234" text-anchor="middle" font-size="9" fill="#455a64">iPXE • 74 KiB • signed</text>
+  <rect x="320" y="202" width="140" height="40" rx="5" fill="#eceff1" stroke="#78909c" stroke-width="1.5"/>
+  <text x="390" y="219" text-anchor="middle" font-size="11" font-weight="bold" fill="#455a64">winpe-uki-stub.efi</text>
+  <text x="390" y="234" text-anchor="middle" font-size="9" fill="#455a64">Rust • 33 KiB • built once</text>
+  <path d="M 750,172 L 750,214 Q 750,222 740,222 L 612,222 Q 602,222 602,232 L 602,252" stroke="#00897b" stroke-width="1.5" fill="none" marker-end="url(#arr-teal)"/>
+  <text x="680" y="214" text-anchor="middle" font-size="10" fill="#00897b" font-weight="bold">added to .files</text>
+
+  <!-- stub explainer (right) -->
+  <rect x="620" y="236" width="260" height="66" rx="6" fill="#ffffff" stroke="#bdbdbd" stroke-width="1.2"/>
+  <text x="630" y="251" font-size="10" font-weight="bold" fill="#616161">winpe-uki-stub (Windows "systemd-stub")</text>
+  <text x="630" y="265" font-size="9" fill="#444">serves .files as a read-only in-memory</text>
+  <text x="630" y="277" font-size="9" fill="#444">EFI_SIMPLE_FILE_SYSTEM; LoadImage(.wimboot)</text>
+  <text x="630" y="289" font-size="9" fill="#444">with DeviceHandle = that file system; StartImage</text>
+
+  <!-- "export" dashed link to install.wim output (drawn first so the bar covers it) -->
+  <path d="M 300,156 L 312,156 L 312,342 L 300,342" stroke="#999" stroke-width="1" stroke-dasharray="4,3" fill="none" marker-end="url(#arr)"/>
+  <text x="316" y="305" font-size="9" fill="#999">export index 1 (Core)</text>
+
+  <!-- mkuki bar -->
+  <rect x="40" y="256" width="570" height="34" rx="4" fill="#f2f2f2" stroke="#d8d8d8" stroke-width="1.5"/>
+  <text x="325" y="277" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#757575">mkuki.sh: objcopy stub + .wimboot + .files (cpio: boot.wim ‖ FDO files)</text>
+  <line x1="115" y1="242" x2="115" y2="254" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+  <line x1="255" y1="242" x2="255" y2="254" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+  <line x1="390" y1="242" x2="390" y2="254" stroke="#555" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <!-- outputs -->
+  <line x1="100" y1="290" x2="100" y2="316" stroke="#1565c0" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+  <rect x="38" y="320" width="125" height="44" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="100" y="335" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565c0">Windows UKI (.efi)</text>
+  <use href="#uki-parts" x="68.5" y="340"/>
+  <text x="100" y="359" text-anchor="middle" font-size="9" fill="#1565c0">502 MiB</text>
+  <rect x="173" y="320" width="125" height="44" rx="8" fill="#ebf0e1" stroke="#669900" stroke-width="2"/>
+  <text x="235" y="337" text-anchor="middle" font-size="11" font-weight="bold" fill="#669900">install.wim</text>
+  <text x="235" y="352" text-anchor="middle" font-size="9" fill="#669900">Std Core • 3.16 GB</text>
+  <!-- inject note -->
+  <rect x="360" y="312" width="520" height="78" rx="6" fill="#fffde7" stroke="#e0d38a" stroke-width="1"/>
+  <text x="372" y="329" font-size="10" font-weight="bold" fill="#6d5d00">Inject, don't modify</text>
+  <text x="372" y="344" font-size="10" fill="#555">wimboot patches the FDO files into X:\Windows\System32 on the fly while bootmgfw reads the WIM;</text>
+  <text x="372" y="358" font-size="10" fill="#555">Microsoft's files are never edited. Payloads are real PE sections, so one SHA-256 covers it all.</text>
+  <text x="372" y="372" font-size="10" fill="#555">Size: 502 MiB, under fdo-uefi-rs's 512 MiB URL-delivery cap (inline: no cap). The stock</text>
+  <text x="372" y="384" font-size="10" fill="#555">BCD loads \sources\boot.wim, so the WIM is always served as boot.wim.</text>
+
+  <!-- ════════════════ FDO SERVER ════════════════ -->
+  <rect x="10" y="420" width="900" height="210" rx="14" fill="#fafafa" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="460" y="442" text-anchor="middle" font-size="14" font-weight="bold" fill="#626262" letter-spacing="1">FDO SERVER (go-fdo)</text>
+  <line x1="100" y1="364" x2="100" y2="505" stroke="#1565c0" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+  <line x1="235" y1="364" x2="235" y2="505" stroke="#669900" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+  <!-- Column 1: static -->
+  <rect x="25" y="452" width="285" height="170" rx="8" fill="#eff5f8" stroke="#90caf9" stroke-width="1"/>
+  <text x="167" y="470" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565c0">Static OS Image</text>
+  <text x="167" y="484" text-anchor="middle" font-size="9" fill="#555">Same for all devices of this type</text>
+  <text x="167" y="497" text-anchor="middle" font-size="9" fill="#888" font-style="italic">Owner-supplied (licensed media)</text>
+  <rect x="38" y="507" width="125" height="50" rx="5" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="100" y="520" text-anchor="middle" font-size="11" font-weight="bold" fill="#1565c0">Windows UKI</text>
+  <use href="#uki-parts" x="68.5" y="524"/>
+  <text x="100" y="543" text-anchor="middle" font-size="9" font-weight="bold" fill="#1565c0">BMO FSIM</text>
+  <text x="100" y="553" text-anchor="middle" font-size="7" fill="#1565c0" font-family="monospace">application/efi</text>
+  <rect x="173" y="507" width="125" height="50" rx="5" fill="#ebf0e1" stroke="#669900" stroke-width="1.5"/>
+  <text x="235" y="527" text-anchor="middle" font-size="11" font-weight="bold" fill="#669900">install.wim</text>
+  <text x="235" y="541" text-anchor="middle" font-size="9" font-weight="bold" fill="#669900">Payload FSIM</text>
+  <text x="235" y="552" text-anchor="middle" font-size="7" fill="#669900" font-family="monospace">vnd.microsoft.wim</text>
+  <text x="100" y="570" text-anchor="middle" font-size="8" fill="#1565c0">↓ Stage 1: URL + SHA-256</text>
+  <text x="100" y="581" text-anchor="middle" font-size="8" fill="#1565c0">(signed image-begin) or inline</text>
+  <text x="235" y="570" text-anchor="middle" font-size="8" fill="#669900">↓ delivers to Stage 2 (2nd)</text>
+
+  <!-- Column 2: per-device -->
+  <rect x="320" y="452" width="280" height="170" rx="8" fill="#fff8e1" stroke="#ffe082" stroke-width="1"/>
+  <text x="460" y="470" text-anchor="middle" font-size="12" font-weight="bold" fill="#f57f17">Per-Device</text>
+  <text x="460" y="484" text-anchor="middle" font-size="9" fill="#555">Specific to each device being onboarded</text>
+  <text x="394" y="500" text-anchor="middle" font-size="9" font-weight="bold" fill="#f57f17">from user / operator</text>
+  <text x="526" y="500" text-anchor="middle" font-size="9" font-weight="bold" fill="#f57f17">from device vendor (DI)</text>
+  <rect x="333" y="507" width="122" height="50" rx="5" fill="#ffffff" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="394" y="524" text-anchor="middle" font-size="11" font-weight="bold" fill="#f57f17">unattend.xml</text>
+  <text x="394" y="538" text-anchor="middle" font-size="9" font-weight="bold" fill="#f57f17">Payload FSIM</text>
+  <text x="394" y="551" text-anchor="middle" font-size="6.6" fill="#f57f17" font-family="monospace">vnd.microsoft.unattend+xml</text>
+  <rect x="465" y="507" width="122" height="50" rx="5" fill="#ffffff" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="526" y="524" text-anchor="middle" font-size="11" font-weight="bold" fill="#f57f17">Ownership</text>
+  <text x="526" y="538" text-anchor="middle" font-size="11" font-weight="bold" fill="#f57f17">Voucher</text>
+  <text x="526" y="551" text-anchor="middle" font-size="8" fill="#f57f17">FDO protocol</text>
+  <text x="394" y="570" text-anchor="middle" font-size="8" fill="#f57f17">↓ delivers to Stage 2 (1st)</text>
+  <text x="526" y="570" text-anchor="middle" font-size="8" fill="#f57f17">↓ used in Stage 1 + 2</text>
+  <rect x="333" y="578" width="254" height="38" rx="5" fill="#ffffff" stroke="#f57f17" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="460" y="592" text-anchor="middle" font-size="9" fill="#555"><tspan font-weight="bold" fill="#f57f17">RV blob (TO0)</tspan>: owner's TO2 address for both stages</text>
+  <text x="460" y="607" text-anchor="middle" font-size="9" fill="#555"><tspan font-weight="bold" fill="#f57f17">Admin SSH key</tspan>: Payload, vnd.fdo.ssh-authorized-keys</text>
+
+  <!-- Column 3: negotiated -->
+  <rect x="610" y="452" width="285" height="170" rx="8" fill="#f3e5f5" stroke="#ce93d8" stroke-width="1"/>
+  <text x="752" y="470" text-anchor="middle" font-size="12" font-weight="bold" fill="#6a1b9a">Negotiated State</text>
+  <text x="752" y="484" text-anchor="middle" font-size="9" fill="#555">Automatic — not user-specified</text>
+  <text x="752" y="497" text-anchor="middle" font-size="9" fill="#888" font-style="italic">Exchanged during onboarding protocol</text>
+  <rect x="637" y="507" width="230" height="50" rx="5" fill="#ffffff" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="752" y="527" text-anchor="middle" font-size="11" font-weight="bold" fill="#6a1b9a">SSH Key Store</text>
+  <text x="752" y="543" text-anchor="middle" font-size="9" font-weight="bold" fill="#6a1b9a">Credentials FSIM</text>
+  <text x="752" y="570" text-anchor="middle" font-size="8" fill="#6a1b9a">↑ received from Stage 2 (WinPE)</text>
+  <text x="752" y="590" text-anchor="middle" font-size="8.5" fill="#555">ed25519 / ecdsa / rsa public keys + device IP</text>
+  <text x="752" y="604" text-anchor="middle" font-size="8.5" fill="#555">→ known_hosts for a verified first connection</text>
+
+  <!-- ════════════════ DEVICE ONBOARDING ════════════════ -->
+  <rect x="48" y="655" width="862" height="822" rx="13" fill="#fafafa" stroke="#bdbdbd" stroke-width="1.5"/>
+  <text x="479" y="677" text-anchor="middle" font-size="14" font-weight="bold" fill="#424242" letter-spacing="1">DEVICE ONBOARDING</text>
+
+  <!-- Stage 1 -->
+  <rect x="62" y="687" width="818" height="92" rx="10" fill="#ffffff" stroke="#bdbdbd" stroke-width="1.5"/>
+  <rect x="63" y="688" width="816" height="22" rx="9" fill="#eeeeee"/>
+  <text x="80" y="704" font-size="13" font-weight="bold" fill="#424242">Stage 1: UEFI Boot</text>
+  <text x="220" y="704" font-size="11" fill="#888">(fdo-uefi-rs, unchanged)</text>
+  <text x="74" y="728" font-size="11" fill="#333">TO1 (to1d verified) → TO2 with TPM credential; voucher chain and owner signature verified</text>
+  <rect x="74" y="738" width="440" height="28" rx="5" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="84" y="756" font-size="11" font-weight="bold" fill="#1565c0">← BMO FSIM: Windows UKI (502 MiB, signed image-begin, SHA-256)</text>
+  <text x="524" y="756" font-size="11" fill="#333">URL ~10 s / inline ~2.5 min; LoadImage / StartImage</text>
+  <line x1="479" y1="779" x2="479" y2="799" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="487" y="794" font-size="10" fill="#555">chainload</text>
+  <use href="#uki-parts" x="408" y="786"/>
+
+  <!-- Stage 2 (coral: this IS stock WinPE) -->
+  <rect x="62" y="803" width="818" height="404" rx="10" fill="#fce4ec" stroke="#e57373" stroke-width="2"/>
+  <rect x="63" y="804" width="816" height="22" rx="9" fill="#ffcdd2"/>
+  <text x="80" y="820" font-size="13" font-weight="bold" fill="#c62828">Stage 2: WinPE (stock boot.wim in a RAM disk)</text>
+  <text x="430" y="820" font-size="11" fill="#c62828" font-style="italic">← Microsoft's WinPE + the injected FDO files from above</text>
+
+  <!-- boot chain chips -->
+  <rect x="74" y="834" width="786" height="24" rx="5" fill="#ffffff" stroke="#78909c" stroke-width="1"/>
+  <text x="84" y="850" font-size="10.5" fill="#333"><tspan font-weight="bold" fill="#455a64">winpe-uki-stub</tspan>  parses .files (cpio), installs a read-only in-memory file system, starts wimboot from .wimboot on it</text>
+  <rect x="74" y="862" width="786" height="24" rx="5" fill="#ffffff" stroke="#78909c" stroke-width="1"/>
+  <text x="84" y="878" font-size="10.5" fill="#333"><tspan font-weight="bold" fill="#455a64">wimboot</tspan>  extracts bootmgfw.efi, BCD, boot.sdi from the WIM; patches the FDO files into X:\Windows\System32</text>
+  <rect x="74" y="890" width="786" height="24" rx="5" fill="#ffffff" stroke="#e0a0a0" stroke-width="1"/>
+  <text x="84" y="906" font-size="10.5" fill="#333"><tspan font-weight="bold" fill="#c62828">bootmgfw → winload → WinPE</tspan>  boot.wim as X: in a RAM disk; winpeshl.ini starts fdo-stage2.cmd (not Setup)</text>
+
+  <!-- fdo-stage2.cmd (teal) -->
+  <rect x="74" y="920" width="786" height="276" rx="8" fill="#e0f2f1" stroke="#00897b" stroke-width="2"/>
+  <rect x="75" y="921" width="784" height="20" rx="7" fill="#b2dfdb"/>
+  <text x="86" y="936" font-size="12" font-weight="bold" fill="#00695c">fdo-stage2.cmd</text>
+  <text x="196" y="936" font-size="10" fill="#00897b" font-style="italic">injected; launched by winpeshl.ini; logs to stage2.log and the console; ends powered off</text>
+  <text x="84" y="958" font-size="11" fill="#333">1. wpeinit: network up (in-box Intel driver, DHCP)</text>
+  <text x="84" y="975" font-size="11" fill="#333">2. diskpart: target disk → GPT: EFI system S: (FAT32), MSR, Windows W: (NTFS)</text>
+  <text x="84" y="992" font-size="11" fill="#333">3. fdo-endpoint.exe -gen-ssh-keys → X:\ProgramData\fdo\ssh-host-keys (Go crypto, no ssh-keygen)</text>
+  <text x="84" y="1009" font-size="11" fill="#333">4. fdo-endpoint.exe: TO1 → TO2 with credential reuse; TPM via TBS (tbs.dll), same TPM credential as Stage 1</text>
+  <rect x="100" y="1016" width="422" height="24" rx="5" fill="#fff8e1" stroke="#f57f17" stroke-width="1.5"/>
+  <text x="110" y="1032" font-size="10.5" font-weight="bold" fill="#f57f17">← Payload FSIM: unattend.xml → W:\fdo\unattend.xml</text>
+  <rect x="530" y="1016" width="310" height="24" rx="5" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="540" y="1032" font-size="10.5" font-weight="bold" fill="#6a1b9a">→ Credentials FSIM: SSH public keys + IP</text>
+  <rect x="100" y="1046" width="422" height="24" rx="5" fill="#ebf0e1" stroke="#669900" stroke-width="1.5"/>
+  <text x="110" y="1062" font-size="10.5" font-weight="bold" fill="#669900">← Payload FSIM: install.wim (3.16 GB) streamed → W:\fdo\install.wim</text>
+  <text x="532" y="1062" font-size="9" fill="#888">← = server to device     → = device to server</text>
+  <rect x="100" y="1076" width="422" height="24" rx="5" fill="#fff8e1" stroke="#f57f17" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="110" y="1092" font-size="10.5" font-weight="bold" fill="#f57f17">← Payload FSIM: admin public key → W:\fdo\authorized_keys</text>
+  <text x="84" y="1120" font-size="11" fill="#333">5. dism /Apply-Image install.wim index 1 → W:\  (scratch on W:)</text>
+  <text x="84" y="1137" font-size="11" fill="#333">6. bcdboot W:\Windows /s S: /f UEFI → "Windows Boot Manager" becomes first in the firmware boot order</text>
+  <text x="84" y="1154" font-size="11" fill="#333">7. stage: unattend → W:\Windows\Panther, SetupComplete.cmd → W:\Windows\Setup\Scripts, host keys → W:\fdo</text>
+  <text x="84" y="1171" font-size="11" fill="#333">8. delete install.wim; wpeutil shutdown</text>
+  <text x="84" y="1188" font-size="9.5" fill="#00695c" font-style="italic">QEMU/KVM: WinPE up → powered off in ~3 min (3.16 GB at ~29 MB/s, DISM apply 51 s)</text>
+
+  <line x1="479" y1="1207" x2="479" y2="1227" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="487" y="1222" font-size="10" fill="#555">power on: boots Windows Boot Manager from the target disk</text>
+
+  <!-- Stage 3 -->
+  <rect x="62" y="1231" width="818" height="140" rx="10" fill="#ffffff" stroke="#669900" stroke-width="1.5"/>
+  <rect x="63" y="1232" width="816" height="22" rx="9" fill="#ebf0e1"/>
+  <text x="80" y="1248" font-size="13" font-weight="bold" fill="#424242">Stage 3: Windows first boot</text>
+  <text x="290" y="1248" font-size="11" fill="#888">(specialize, OOBE, SetupComplete; no FDO involvement)</text>
+  <text x="80" y="1272" font-size="11" fill="#333">specialize: ComputerName, TimeZone from unattend.xml</text>
+  <text x="80" y="1289" font-size="11" fill="#333">oobeSystem: locale, OOBE pages hidden, local Administrator password</text>
+  <text x="80" y="1306" font-size="11" fill="#333">SetupComplete.cmd (SYSTEM): FDO host keys → C:\ProgramData\ssh (ACL: SYSTEM + Administrators only)</text>
+  <text x="80" y="1323" font-size="11" fill="#333">owner key → administrators_authorized_keys; sshd auto-start, started; firewall rule for 22/tcp</text>
+  <text x="80" y="1340" font-size="11" fill="#333">removes the private-key staging copies and both unattend copies (they hold the plaintext password)</text>
+  <text x="80" y="1360" font-size="9.5" fill="#669900" font-style="italic">QEMU/KVM: power on → sshd answering in ~41 s</text>
+
+  <line x1="479" y1="1371" x2="479" y2="1391" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Result -->
+  <rect x="140" y="1395" width="680" height="72" rx="10" fill="#e8f5e9" stroke="#43a047" stroke-width="2"/>
+  <text x="480" y="1418" text-anchor="middle" font-size="14" font-weight="bold" fill="#2e7d32">Installed Windows Server 2025 Standard Core</text>
+  <text x="480" y="1436" text-anchor="middle" font-size="11" fill="#333">FDO-provisioned SSH host keys (no TOFU)  •  key-only admin SSH  •  keys and sshd survive reboots</text>
+  <text x="480" y="1453" text-anchor="middle" font-size="11" fill="#333">Windows Boot Manager first, so no re-onboarding on reboot  •  Server holds the keys for verified first SSH</text>
+
+  <!-- ════════════════ COLORED TRACE LINES ════════════════ -->
+  <!-- BLUE: UKI -> Stage 1 BMO -->
+  <path d="M 100,557 V 646 H 36 V 752 H 72" stroke="#1565c0" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-blue)"/>
+  <text x="-748" y="46" font-size="8" font-weight="bold" fill="#1565c0" transform="rotate(-90)">UKI via BMO</text>
+  <!-- AMBER: unattend -> Stage 2 -->
+  <path d="M 350,557 V 640 H 26 V 1028 H 98" stroke="#f57f17" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-amber)"/>
+  <text x="-1000" y="35" font-size="8" font-weight="bold" fill="#f57f17" transform="rotate(-90)">unattend via Payload</text>
+  <!-- GREEN: install.wim -> Stage 2 -->
+  <path d="M 235,557 V 634 H 16 V 1058 H 98" stroke="#669900" stroke-width="2.5" fill="none" stroke-dasharray="8,4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-green)"/>
+  <text x="-1052" y="25" font-size="8" font-weight="bold" fill="#669900" transform="rotate(-90)">install.wim via Payload FSIM</text>
+  <!-- PURPLE: credentials -> SSH key store -->
+  <path d="M 842,1028 H 900 V 532 H 869" stroke="#6a1b9a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr-purple)"/>
+  <text x="780" y="-904" font-size="8" font-weight="bold" fill="#6a1b9a" transform="rotate(90)">SSH via Credentials</text>
+
+  <!-- ════════════════ COLOR LEGEND ════════════════ -->
+  <rect x="20" y="1490" width="880" height="44" rx="6" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+  <rect x="35" y="1496" width="12" height="12" rx="2" fill="#ffcdd2" stroke="#e57373"/>
+  <text x="52" y="1506" font-size="9" font-weight="bold" fill="#555">WinPE / Windows</text>
+  <text x="142" y="1506" font-size="8" fill="#888">(vendor files, unmodified)</text>
+  <rect x="262" y="1496" width="12" height="12" rx="2" fill="#e0f2f1" stroke="#00897b"/>
+  <text x="279" y="1506" font-size="9" font-weight="bold" fill="#555">FDO files</text>
+  <text x="335" y="1506" font-size="8" fill="#888">(injected at boot)</text>
+  <rect x="425" y="1496" width="12" height="12" rx="2" fill="#eceff1" stroke="#78909c"/>
+  <text x="442" y="1506" font-size="9" font-weight="bold" fill="#555">Boot glue</text>
+  <text x="498" y="1506" font-size="8" fill="#888">(winpe-uki-stub + wimboot)</text>
+  <rect x="625" y="1496" width="12" height="12" rx="2" fill="#fff" stroke="#e0a0a0"/>
+  <text x="642" y="1506" font-size="9" font-weight="bold" fill="#555">WinPE step</text>
+  <text x="704" y="1506" font-size="8" fill="#888">(stock Microsoft behaviour)</text>
+  <rect x="35" y="1514" width="12" height="12" rx="2" fill="#e3f2fd" stroke="#1565c0"/>
+  <text x="52" y="1524" font-size="9" font-weight="bold" fill="#555">Windows UKI</text>
+  <text x="124" y="1524" font-size="8" fill="#888">(BMO)</text>
+  <rect x="172" y="1514" width="12" height="12" rx="2" fill="#ebf0e1" stroke="#669900"/>
+  <text x="189" y="1524" font-size="9" font-weight="bold" fill="#555">install.wim</text>
+  <text x="254" y="1524" font-size="8" fill="#888">(Payload → W:)</text>
+  <rect x="340" y="1514" width="12" height="12" rx="2" fill="#fff8e1" stroke="#f57f17"/>
+  <text x="357" y="1524" font-size="9" font-weight="bold" fill="#555">Per-Device</text>
+  <text x="422" y="1524" font-size="8" fill="#888">(unattend + admin key + OV + RV blob)</text>
+  <rect x="600" y="1514" width="12" height="12" rx="2" fill="#f3e5f5" stroke="#6a1b9a"/>
+  <text x="617" y="1524" font-size="9" font-weight="bold" fill="#555">Negotiated</text>
+  <text x="682" y="1524" font-size="8" fill="#888">(SSH keys)</text>
+</svg>

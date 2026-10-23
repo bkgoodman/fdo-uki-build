@@ -16,8 +16,9 @@ Each target has its own guide, with a detailed architecture diagram, build steps
 | **Fedora 44** Server DVD | Anaconda | kickstart | 277 MiB / 3.6 GiB | 2026-09-30 | [README-FEDORA.md](README-FEDORA.md) |
 | **openSUSE Leap 16.0** offline | Agama (live ISO) | Agama JSON profile | 125 MiB / 4.2 GiB | 2026-10-05 | [README-OPENSUSE.md](README-OPENSUSE.md) |
 | **ROS 2 Lyrical** on Ubuntu 26.04.1 | Subiquity + offline ROS 2 apt bundle | autoinstall YAML | 106 MiB / 2.7 GiB + 132 MiB bundle | 2026-10-07 | [README-ROS2.md](README-ROS2.md) |
+| **Windows Server 2025** Standard Core (eval) | WinPE + DISM, then Windows first-boot setup | `unattend.xml` | 502 MiB "Windows UKI" / 3.16 GB `install.wim` | 2026-10-22 | [README-WINDOWS.md](README-WINDOWS.md) |
 
-Every target has a `TEST-<OS>-UKI.md` (findings, hashes, timings) and a `TODO-<OS>-UKI.md` (phased work tracker). Work that applies to all targets is in [TODO.md](TODO.md).
+Every Linux target has a `TEST-<OS>-UKI.md` (findings, hashes, timings) and a `TODO-<OS>-UKI.md` (phased work tracker); Windows has [TEST-WINDOWS.md](TEST-WINDOWS.md) and [TODO-WINDOWS.md](TODO-WINDOWS.md). Work that applies to all targets is in [TODO.md](TODO.md).
 
 ## How It Works
 
@@ -42,11 +43,17 @@ SSH host keys aren't loaded onto the server: the device generates them and sends
 2. **Installer boot.** Inside the vendor's initramfs, go-fdo-endpoint generates SSH host keys and runs FDO again with the same TPM credential (credential reuse). It receives the OS config, streams the whole ISO into a RAM disk, and returns the SSH public keys.
 3. **Stock installer.** The vendor's own installer finds the ISO on the RAM disk and runs the delivered config unattended. It copies the FDO-generated host keys into the installed system, then powers off. FDO plays no part in this stage.
 
+**Windows** follows the same three stages with different plumbing ([README-WINDOWS.md](README-WINDOWS.md)). The boot artifact is a "Windows UKI": the [winpe-uki-stub](../winpe-uki-stub) EFI stub carrying wimboot, Microsoft's WinPE and the FDO files. Stage 2 runs in WinPE, with TPM access through Windows TBS. Instead of the whole ISO in RAM, it streams one exported `install.wim` onto the target disk and applies it with DISM; Windows' own first-boot setup is Stage 3.
+
 ## Key Ideas
 
 ### Why a UKI?
 
 FDO Stage 1 (fdo-uefi-rs) runs in UEFI with no filesystem, no disk, and no OS. It can only chainload an EFI binary. A UKI packages the Linux kernel, initramfs, and kernel command line into a single `.efi` file that UEFI can load directly — no bootloader required. The FDO owner delivers this UKI as a BMO (Bare Metal Onboarding) payload.
+
+### Windows has no kernel + initrd: the "Windows UKI"
+
+Windows boots through its boot manager loading a WIM into a RAM disk, normally from PXE or a DVD. [winpe-uki-stub](../winpe-uki-stub) turns that into one EFI binary that Stage 1 can chainload, much as systemd-stub does for Linux. The stub carries wimboot (iPXE, Microsoft-signed), the stock WinPE WIM and the FDO files in its own PE sections. It serves them as an in-memory file system, and wimboot injects the FDO files into WinPE at boot, so Microsoft's files are never edited. Details: [README-WINDOWS.md](README-WINDOWS.md#why-winpe-wimboot-and-a-stub).
 
 ### The ISO lives in a RAM disk
 
@@ -92,7 +99,7 @@ DEPLOY=1 DEPLOY_HOST=<test-host> ./build-<os>-installer-uki.sh
 ./boot-installed-vm.sh <test-workdir>/target.qcow2
 ```
 
-`<os>` is `ubuntu`, `fedora`, `opensuse` or `ros2`. The Ubuntu path's older harness is `test-installer-pe2.sh`. The test host needs `swtpm`, `qemu-system-x86_64`, OVMF, the FDO server (`go-fdo` `examples/cmd`), `quick-di-tpm` (`go-fdo-quick-di`), and the UEFI client disk `efi-disk-release.img` (`fdo-uefi-rs`). Paths are set with environment variables; see each script's header.
+`<os>` is `ubuntu`, `fedora`, `opensuse` or `ros2`. The Ubuntu path's older harness is `test-installer-pe2.sh`. Windows is not scripted into this pattern yet: its build steps are in [README-WINDOWS.md](README-WINDOWS.md#building-and-testing), and its harness is `windows/spike/start17-winpe-uki.sh` (installed disk: `windows/spike/boot-installed-windows.sh`). The test host needs `swtpm`, `qemu-system-x86_64`, OVMF, the FDO server (`go-fdo` `examples/cmd`), `quick-di-tpm` (`go-fdo-quick-di`), and the UEFI client disk `efi-disk-release.img` (`fdo-uefi-rs`). Paths are set with environment variables; see each script's header.
 
 **All development and building happens on the build host.** This is the source-of-truth for code, tools, and git repos. After building, we copy required components to deployment targets (QEMU test hosts, edge devices, etc.).
 
@@ -101,9 +108,10 @@ DEPLOY=1 DEPLOY_HOST=<test-host> ./build-<os>-installer-uki.sh
 - `build-<os>-installer-uki.sh`, `test-<os>-installer.sh`: builder and end-to-end test harness per target
 - `config/`: pinned ISO URLs/hashes (`*-installer.env`) and test configs (autoinstall, kickstart, Agama profile)
 - `rootfs-*/`: the files each builder adds to the vendor initramfs
-- `README-<OS>.md`, `TEST-<OS>-UKI.md`, `TODO-<OS>-UKI.md`: per-target guide, results and work tracker
+- `windows/`: the Windows target: `stage2/` (WinPE Stage 2 script, endpoint config, `SetupComplete.cmd`, test unattend), `spike/` (end-to-end harness, run viewer, installed-disk boot, Phase 0/1 spikes), `tbs-probe/` (TPM credential probe)
+- `README-<OS>.md`, `TEST-<OS>-UKI.md`, `TODO-<OS>-UKI.md`: per-target guide, results and work tracker (Windows: `README-WINDOWS.md`, `TEST-WINDOWS.md`, `TODO-WINDOWS.md`)
 - `TODO.md`: cross-cutting work tracker (all targets)
-- `doc/`: diagrams, plus the cross-cutting deep dives:
+- `doc/`: diagrams (one `fdo-uki-<os>-architecture.svg` per target, including `fdo-uki-windows-architecture.svg`), plus the cross-cutting deep dives:
   - [doc/SSH-HOST-KEYS.md](doc/SSH-HOST-KEYS.md): TOFU, the Credentials FSIM exchange, connecting to an onboarded device
   - [doc/MANAGED-EDGE.md](doc/MANAGED-EDGE.md): BMO + OS install + management agent → fully managed edge system
   - [doc/REFERENCE.md](doc/REFERENCE.md): endpoint config, server flags, watchdog duration advisory, troubleshooting

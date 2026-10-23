@@ -1,0 +1,50 @@
+# go-fdo-endpoint config for Stage 2 inside WinPE (Phase 2).
+# The owner/RV address comes from the TPM credential (DI), as on Linux.
+blob_path: ""
+debug: false
+fdo_version: 200
+
+di:
+  url: ""
+  key: "ec256"
+  key_enc: "x509"
+
+crypto:
+  cipher_suite: "A128GCM"
+  kex_suite: "ECDH256"
+
+transport:
+  tpm_path: ""
+
+operation:
+  print_device: false
+  rv_only: false
+  ignore_credential_rotation: true
+
+handlers:
+  sysconfig: {}
+  payload:
+    temp_dir: 'X:\fdo\tmp'
+    default_action: "reject"
+    mime_types:
+      application/vnd.microsoft.unattend+xml:
+        enabled: true
+        destination: 'W:\fdo\unattend.xml'
+        command: 'echo unattend.xml received: {filename}'
+      application/vnd.microsoft.wim:
+        enabled: true
+        destination: 'W:\fdo\install.wim'
+        command: 'dir "{filename}"'
+      application/vnd.fdo.ssh-authorized-keys:
+        enabled: true
+        destination: 'W:\fdo\authorized_keys'
+        command: 'type "{filename}"'
+
+service_info:
+  download_dir: ""
+  echo_commands: false
+  wget_dir: ""
+  upload_paths: []
+
+fdo_sys:
+  enabled: false

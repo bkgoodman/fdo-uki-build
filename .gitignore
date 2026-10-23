@@ -8,3 +8,5 @@ firmware/
 golden/
 *.efi
 build-ros2/
+build-windows/
+__pycache__/
