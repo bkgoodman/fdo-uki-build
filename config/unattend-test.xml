@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Test unattend for a DISM-applied Windows Server 2025 image (Phase 3).
+  Test answer file for a DISM-applied Windows Server 2025 image.
   Delivered per device by the owner as application/vnd.microsoft.unattend+xml,
-  copied to \Windows\Panther\unattend.xml by fdo-stage2.cmd; Windows runs the
+  staged to \Windows\Panther\unattend.xml by fdo-stage2.cmd; Windows runs the
   specialize and oobeSystem passes on first boot.
-  TEST-ONLY local Administrator password (console only; SSH uses keys).
+
+  DEMO ONLY: the plaintext Administrator password below shows that the owner
+  can set it through FDO. Do NOT ship passwords like this. Remove the whole
+  UserAccounts element for an SSH-only install: the device then gives the
+  account a random password nobody knows (Windows setup needs one) and makes
+  sshd key-only. (README-WINDOWS.md "The answer file")
 -->
 <unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
   <settings pass="specialize">

@@ -8,62 +8,54 @@
 
 The Windows path boots Microsoft's own **WinPE** (from the Setup `boot.wim` of the Windows Server 2025 evaluation ISO). WinPE runs go-fdo-endpoint, which receives an `unattend.xml` and an `install.wim`, applies the image with DISM and makes the disk bootable. Windows then finishes setup on its own. Everything is built on Linux; there is no Windows build host, no ADK and no DISM on the build side. For the full picture, see the [Windows architecture diagram](doc/fdo-uki-windows-architecture.svg) and [Theory of Operation](#theory-of-operation).
 
-The build is **not scripted yet** (`build-windows-installer.sh` is a TODO). These are the steps the verified runs used, from the repo root:
-
 ```bash
-source config/windows-installer.env
-mkdir -p assets build-windows/iso build-windows/inject3
-# 1. Fetch and verify the pinned ISO (5.6 GiB, UDF)
-curl -fL -o "assets/$WINDOWS_ISO_NAME" "$WINDOWS_ISO_URL"
-echo "$WINDOWS_ISO_SHA256  assets/$WINDOWS_ISO_NAME" | sha256sum -c -
-curl -fL -o assets/wimboot-2.9.0 "$WIMBOOT_URL"
-echo "$WIMBOOT_SHA256  assets/wimboot-2.9.0" | sha256sum -c -
-
-# 2. Export the two images (no recompression; contents unchanged).
-#    `export` APPENDS to an existing WIM, so start from fresh files.
-rm -f build-windows/winpe-idx1.wim build-windows/install-core.wim
-sudo mount -o loop,ro "assets/$WINDOWS_ISO_NAME" build-windows/iso    # UDF: xorriso cannot read it
-wimlib-imagex export build-windows/iso/sources/boot.wim    1 build-windows/winpe-idx1.wim --boot
-wimlib-imagex export build-windows/iso/sources/install.wim 1 build-windows/install-core.wim  # Standard Core
-sudo umount build-windows/iso
-
-# 3. The agent (go-fdo-endpoint, Windows, TPM via TBS)
-(cd ../go-fdo-endpoint && GOOS=windows GOARCH=amd64 go build -tags=tpm -trimpath -ldflags "-s -w" \
-    -o ../fdo-uki-build/build-windows/inject3/fdo-endpoint.exe .)
-
-# 4. The stub (once) and the Windows UKI
-(cd ../winpe-uki-stub && make release)
-for f in winpeshl.ini fdo-stage2.cmd fdo-endpoint.yaml SetupComplete.cmd; do
-    sed 's/\r*$/\r/' windows/stage2/$f > build-windows/inject3/$f      # CRLF for cmd.exe
-done
-ln -sf ../winpe-idx1.wim build-windows/inject3/winpe.wim
-../winpe-uki-stub/tools/mkuki.sh -s ../winpe-uki-stub/target/x86_64-unknown-uefi/release/winpe-uki-stub.efi \
-    -w assets/wimboot-2.9.0 -o build-windows/winpe-stage3-uki.efi build-windows/inject3/*
-sed 's/\r*$/\r/' windows/stage2/unattend.xml > build-windows/unattend.xml
+GO_ROOT=/path/to/go1.25 ./build-windows-installer.sh
 ```
 
-Outputs: `build-windows/winpe-stage3-uki.efi` (the Windows UKI, ~502 MiB), `build-windows/install-core.wim` (3.16 GB) and `build-windows/unattend.xml`. Extra host tools: `wimtools` (wimlib), `mtools`, `cpio` (GNU, for `--reproducible`), Rust nightly (for the stub), Go 1.25.
+The script:
 
-On the test host (needs `qemu-system-x86_64` with KVM, OVMF, `swtpm`, the FDO server `server-installer`, `quick-di-tpm` and the UEFI client disk `efi-disk-release.img`), with the UKI, the image and the unattend copied over:
+1. Downloads and verifies the pinned ISO (SHA-256, size, UDF label) and wimboot (SHA-256); config in `config/windows-installer.env`.
+2. Loop-mounts the ISO read-only (the only `sudo` step; the ISO is UDF, so `xorriso` can't read it). It checks `boot.wim` against its pinned hash and exports, with wimlib and no recompression:
+   - WinPE (`boot.wim` index `WINPE_INDEX`)
+   - the edition `INSTALL_INDEX`, checked by name against `INSTALL_IMAGE_NAME`
 
-```bash
-P=<dir with unattend.xml and install-core.wim>
-INSTALLED_BOOT=1 TARGET_GB=60 TIMEOUT_QEMU=1800 RUN_TAG=phase3 \
-SERVER_EXTRA="-payload application/vnd.microsoft.unattend+xml:$P/unattend.xml \
-  -payload application/vnd.microsoft.wim:$P/install-core.wim \
-  -request-pubkey device_info:device_info" \
-windows/spike/start17-winpe-uki.sh winpe-stage3-uki.efi
+   Exports are cached per ISO hash and index (`FORCE=1` re-exports).
+3. Checks the exported images for what the flow relies on: the TPM stack (`tbs.dll`, `tpm.sys`, `Win32_Tpm`), diskpart, DISM, bcdboot, wpeinit, the boot files, and OpenSSH Server in the install image.
+4. Builds `fdo-endpoint.exe` (`GOOS=windows -tags=tpm`) and `winpe-uki-stub` (`make release` in `../winpe-uki-stub`).
+5. Converts the Stage 2 files to CRLF and builds the Windows UKI with `mkuki.sh`. It reports the headroom under fdo-uefi-rs's 512 MiB URL-delivery cap, and warns if the UKI is over it.
+6. Checks the answer file (well-formed XML with a `ComputerName`), then writes `build-windows/SHA256SUMS` with the component revisions.
 
-# Boot the installed disk again later, re-check SSH, optionally leave it running
-windows/spike/boot-installed-windows.sh <archived run dir> [--reboot-test] [--keep]
+```text
+firmware/windows-server-2025-fdo.efi                 Windows UKI (BMO)               ~494 MiB
+firmware/windows-server-2025-standard-core.wim       install image (Payload)         3.16 GB
+firmware/unattend-test.xml                           answer file (Payload, CRLF)
 ```
 
-The harness does DI with a software TPM, starts the owner and registers TO0, then runs the device VM through Stage 1 and Stage 2. With `INSTALLED_BOOT=1` it also boots the installed disk on its own and logs in over SSH with `StrictHostKeyChecking=yes` against **only** the host keys the owner received over fdo.credentials, plus a wrong-key negative control. It shows each run live (`view.py`: screenshots, milestones, serial log) and archives it. The script header lists all options (`DELIVERY=url|inline`, `BMO_SIGN`, NIC choices, …).
+Extra host tools: `wimtools` (wimlib), `mtools`, GNU `cpio`, `rsync`, Rust nightly (for the stub). `ENDPOINT_EXE` / `STUB_EFI` take prebuilt binaries; `ENDPOINT_TESTS=1` also injects the endpoint's Windows unit tests, which `fdo-stage2.cmd` then runs in WinPE.
+
+```bash
+DEPLOY=1 DEPLOY_HOST=<hostname> ./build-windows-installer.sh          # copy payloads + test scripts
+DEPLOY=1 TEST=1 DEPLOY_HOST=<hostname> ./build-windows-installer.sh   # ... and run the test there
+./test-windows-installer.sh          # on the test host (in ~/fdo-windows after DEPLOY)
+./boot-installed-windows.sh <run dir> [--reboot-test] [--keep]   # boot an archived installed disk (KEEP_DISK=1)
+```
+
+`DEPLOY=1` uses `rsync --checksum`, so the 3 GB image only crosses the network when it changed. The payloads go to `DEPLOY_FIRMWARE_DIR` (`/tmp/fdo-firmware-server`). `test-windows-installer.sh`, `boot-installed-windows.sh`, `windows/view.py` and the env file go to `~/fdo-windows`. With `TEST=1` the builder runs the test on the host, copies the run archive back to `build-windows/runs/<run>/` (open `view/index.html`), and **exits with the test's status**.
+
+The test host needs `qemu-system-x86_64` with KVM, OVMF, `swtpm`, `mtools`, the FDO server (`server-installer`), `quick-di-tpm` and the UEFI client disk `efi-disk-release.img`. `test-windows-installer.sh`:
+
+1. Does DI with a software TPM, then starts the owner with the Windows UKI (BMO; URL with SHA-256 in a signed image-begin by default, or `DELIVERY=inline`), the answer file, the install image and a fresh harness SSH key (Payload), and registers TO0.
+2. Runs the device VM through Stage 1 and Stage 2 until it powers itself off.
+3. Boots the installed disk **alone** and logs in over SSH with `StrictHostKeyChecking=yes` against only the host keys the owner received over fdo.credentials.
+4. Asserts every step, about 25 checks: TO0; Stage 1 TO2, BMO integrity and chainload; Stage 2 TO2 with credential reuse, payloads hash-checked by the owner, DISM, bcdboot; installed hostname = the answer file's `ComputerName`, `SetupComplete.cmd` ran, sshd running and auto-start, no private-key or answer-file copies left behind, host key ACL; and a wrong-host-key negative control that must be refused.
+5. Prints `RESULT: PASS` or `RESULT: FAIL` and exits 0 or 1. Every run is archived to `~/fdo-windows-runs/<timestamp>[-RUN_TAG]/`, with `result.txt`, the logs, and `view/` (screenshots, milestones, serial log, `stage2.log`, `installed-check.log`). The last line is `ARCHIVE: <dir>`.
+
+While it runs, `windows/view.py` serves a live page on `127.0.0.1:8099` and the VM screen is on VNC. If the default SSH-forward (2222) and VNC ports are taken, it uses the next free ones, so it can run next to a VM you're using. Options are in the script header (`DELIVERY`, `BMO_SIGN`, `INSTALL=0` for delivery only, `KEEP_DISK=1`, NIC choices, timeouts).
 
 **Verified end to end in QEMU on 2026-10-22:**
 
 - TO1/TO2 in both stages (Stage 2 with credential reuse, TPM via Windows TBS)
-- BMO of the 502 MiB Windows UKI, by URL (signed image-begin with SHA-256, ~10 s) and inline (~2.5 min)
+- BMO of the Windows UKI (502 MiB then, 494 MiB without the test binary), by URL (signed image-begin with SHA-256, ~10 s) and inline (~2.5 min)
 - the 3.16 GB `install.wim` streamed to NTFS (~29 MB/s), DISM apply (51 s), bcdboot
 - first boot: specialize/OOBE from the unattend, `SetupComplete.cmd`, sshd up ~41 s after power-on; bare machine to SSH in ~5 minutes
 - SSH host keys identical to the FDO-registered keys, strict host-key checking with no TOFU; a wrong key is refused
@@ -77,7 +69,7 @@ The FDO side is the same as for the Linux targets: TO1/TO2 in both stages, BMO, 
 
 ### At a Glance
 
-- **Build time:** export WinPE (`boot.wim` index 1) and one edition (`install.wim` index 1, Standard Core) from the ISO with wimlib, leaving Microsoft's files untouched. Pack WinPE, wimboot and the FDO files (agent, scripts, config) into **one EFI binary** with `winpe-uki-stub`: the "Windows UKI", 502 MiB.
+- **Build time:** export WinPE (`boot.wim` index 1) and one edition (`install.wim` index 1, Standard Core) from the ISO with wimlib, leaving Microsoft's files untouched. Pack WinPE, wimboot and the FDO files (agent, scripts, config) into **one EFI binary** with `winpe-uki-stub`: the "Windows UKI", ~494 MiB.
 - **Server:** Windows UKI (BMO), `install.wim` (Payload, `application/vnd.microsoft.wim`), **`unattend.xml`** (Payload, `application/vnd.microsoft.unattend+xml`, sent first), the admin's SSH public key (Payload), voucher, RV blob.
 - **Stage 1 (UEFI):** TO1 → TO2 → BMO → chainload, exactly as for the other targets. fdo-uefi-rs is unchanged.
 - **Stage 2 (WinPE):** the stub starts wimboot. wimboot starts Microsoft's boot manager on the WIM and injects the FDO files. `winpeshl.ini` runs `fdo-stage2.cmd`, which:
@@ -101,7 +93,7 @@ The FDO side is the same as for the Linux targets: TO1/TO2 in both stages, BMO, 
 | Installer | Subiquity / Anaconda / Agama | `dism /Apply-Image` + `bcdboot`, then Windows first-boot setup |
 | SSH key install | late-commands / `%post` / post scripts | `SetupComplete.cmd` (+ `icacls`) |
 | Admin access | user's `authorized_keys` from the config | `administrators_authorized_keys`, delivered as a Payload |
-| Sizes / QEMU RAM | UKI 106–290 MB, ISO 2.7–4.2 GiB / 8–16 GiB | UKI 502 MiB, image 3.16 GB / 4 GiB |
+| Sizes / QEMU RAM | UKI 106–290 MB, ISO 2.7–4.2 GiB / 8–16 GiB | UKI ~494 MiB, image 3.16 GB / 4 GiB |
 
 ### Why WinPE, wimboot and a stub
 
@@ -123,16 +115,47 @@ Because the payloads are real PE sections, the BMO hash covers the boot manager,
 3. `fdo-endpoint.exe -gen-ssh-keys %ProgramData%\fdo\ssh-host-keys` (Go crypto; WinPE has no ssh-keygen).
 4. `fdo-endpoint.exe -config fdo-endpoint.yaml`: TO1 → TO2 with credential reuse. The owner address comes from the TPM credential's RV info and the TO0 blob, as on Linux. The payload handlers (`windows/stage2/fdo-endpoint.yaml`) stream each payload to its destination on `W:`, and the Payload FSIM checks the owner's hash. Handler commands run through `cmd.exe /S /C`.
 5. `dism /Apply-Image /Index:1 /ApplyDir:W:\` (scratch on `W:`), then `bcdboot W:\Windows /s S: /f UEFI`. bcdboot also puts "Windows Boot Manager" first in the firmware boot order, so the next power-on boots Windows, not Stage 1.
-6. Stage `unattend.xml` → `W:\Windows\Panther`, `SetupComplete.cmd` → `W:\Windows\Setup\Scripts`, host keys and agent → `W:\fdo`; delete `install.wim`; `wpeutil shutdown`.
+6. Stage the answer file with `fdo-answerfile.exe` → `W:\Windows\Panther` (password or SSH-only mode, below), `SetupComplete.cmd` → `W:\Windows\Setup\Scripts`, host keys and agent → `W:\fdo`; delete `install.wim`; `wpeutil shutdown`.
 
 Everything goes to `stage2.log` (on the harness's results disk) and to the screen.
 
-### Unattend and SetupComplete
+### The answer file (`unattend.xml`)
 
-`windows/stage2/unattend.xml` (test values) sets the computer name and time zone in **specialize**, and locale, hidden OOBE pages and the local Administrator password in **oobeSystem**. It is a per-device Payload, like the Linux configs. On Windows, `SetupComplete.cmd` runs once as SYSTEM at the end of first-boot setup. It:
+The answer file is Windows' per-machine configuration, like autoinstall YAML, a kickstart or an Agama profile on Linux, and here it plays the same part. It's a **per-device Payload** (`application/vnd.microsoft.unattend+xml`) that the owner sends first in Stage 2. `fdo-stage2.cmd` puts it in `\Windows\Panther\unattend.xml`, where Windows picks it up on first boot. The test file is `config/unattend-test.xml`.
+
+An answer file is organized in *configuration passes*. Which ones apply depends on how Windows is installed:
+
+| Pass | When it runs | Used here? |
+| --- | --- | --- |
+| `windowsPE` | inside Setup (`setup.exe`): disk layout, which image to install, product key, EULA | **No.** We don't run Setup; `fdo-stage2.cmd` does the same jobs with diskpart, DISM and bcdboot. This is the usual approach of deployment tools (MDT, Configuration Manager). It also keeps us on WinPE, since Setup's bigger `boot.wim` doesn't fit the 512 MiB URL cap. |
+| `offlineServicing` | applying updates / drivers to the offline image | not used |
+| `specialize` | first boot, before OOBE: computer name, time zone, domain join, network, RDP, `RunSynchronous` commands | **yes:** `ComputerName`, `TimeZone` |
+| `oobeSystem` | first boot, OOBE: locale, which OOBE pages to skip, accounts, auto-logon, `FirstLogonCommands` | **yes:** locale, OOBE pages hidden, local Administrator password |
+
+So the answer file is where the **Windows configuration** of a device belongs: hostname, passwords and accounts, domain join, product key, time zone, locale, RDP/WinRM, firewall and first-logon commands. Disk layout and image choice belong to the script and the owner's choice of `install.wim`. The harness checks the result: the installed hostname must equal the answer file's `ComputerName`.
+
+**The Administrator password: two modes.** The device picks the mode from the answer file:
+
+| Answer file | Mode | What the device does | Login |
+| --- | --- | --- | --- |
+| has `UserAccounts/AdministratorPassword` (the demo `config/unattend-test.xml`) | **password** (demo) | uses it as is | console and SSH with that password, and SSH with the owner's key |
+| no `AdministratorPassword` (remove the `UserAccounts` element) | **SSH-only** | `fdo-answerfile.exe` (in WinPE) adds a random 32-character password from the system RNG, only to get through setup; `SetupComplete.cmd` makes sshd key-only (`PasswordAuthentication no`, `KbdInteractiveAuthentication no`) | SSH with the owner's key only; nobody knows the password |
+
+> **Don't ship plaintext passwords.** Password mode exists to show that the owner can set the password through FDO. A plaintext (or `<PlainText>false</PlainText>`, which is only base64) password in a delivered answer file is readable by anyone who sees the file. It travels inside the encrypted TO2 session, and `SetupComplete.cmd` deletes both answer-file copies after setup, but until then it is on the disk. Use **SSH-only** for real deployments, or have the owner generate a per-device password it keeps in its own records.
+
+Why not simply omit the password and disable the account?
+- If the answer file has no Administrator password, Windows Server's first-boot setup **stops and asks for one**, which hangs an unattended install.
+- Windows refuses SSH key logins to a disabled account.
+
+So SSH-only keeps the account enabled, with a password nobody ever learns. The random password is only on the device's disk in the staged answer file, which `SetupComplete.cmd` deletes. `test-windows-installer.sh ANSWER_MODE=ssh-only` tests this mode: it strips `UserAccounts` from the demo file, then checks that sshd offers only `publickey` and that a login with the demo password is refused.
+
+### SetupComplete
+
+`SetupComplete.cmd` runs once as SYSTEM at the end of first-boot setup. It:
 
 - copies the FDO host keys to `C:\ProgramData\ssh` and restricts the private keys to SYSTEM and Administrators (Windows sshd refuses broader ACLs)
 - installs the owner-delivered key as `administrators_authorized_keys` (same ACL)
+- in SSH-only mode (marker `C:\fdo\ssh-only`), writes `sshd_config` with `PasswordAuthentication no` and `KbdInteractiveAuthentication no` ahead of the stock defaults
 - sets sshd to auto-start, starts it, and opens 22/tcp
 - **deletes** the private-key staging copies in `C:\fdo` (they inherit `C:\`'s ACL, which lets local users read them) and both unattend copies (they hold the plaintext password); the first Phase 3 run left both behind
 - writes the marker `C:\fdo-installed.txt`
@@ -147,7 +170,7 @@ Same model as the Linux targets ([doc/SSH-HOST-KEYS.md](doc/SSH-HOST-KEYS.md)): 
 
 Timings are from the verified QEMU run (KVM, 4 vCPU, 4 GiB).
 
-1. **Stage 1:** TO1 (to1d verified) → TO2 → signed BMO image-begin with URL + SHA-256 → download and hash check of the 502 MiB UKI (~10 s) → chainload.
+1. **Stage 1:** TO1 (to1d verified) → TO2 → signed BMO image-begin with URL + SHA-256 → download and hash check of the ~494 MiB UKI (~10 s) → chainload.
 2. **Boot chain:** winpe-uki-stub → wimboot → `bootmgfw.efi` → WinPE (seconds).
 3. **Stage 2:**
    - disk layout, SSH keys
@@ -158,7 +181,7 @@ Timings are from the verified QEMU run (KVM, 4 vCPU, 4 GiB).
 
 ### Windows-specific gotchas
 
-- **Size cap:** fdo-uefi-rs aborts HTTP (URL / meta-URL) downloads above 512 MiB. The UKI from the full Setup `boot.wim` is 519.6 MiB and does not fit, hence WinPE only (488 MiB); with the agent it is 502 MiB. Inline delivery has no cap. See [TODO.md](TODO.md) "Stage 1 image size limits".
+- **Size cap:** fdo-uefi-rs aborts HTTP (URL / meta-URL) downloads above 512 MiB. The UKI from the full Setup `boot.wim` is 519.6 MiB and does not fit, hence WinPE only (488 MiB); with the agent it is ~494 MiB (502 MiB with `ENDPOINT_TESTS=1`). Inline delivery has no cap. See [TODO.md](TODO.md) "Stage 1 image size limits".
 - **The WIM must be named `boot.wim`:** the stock BCD loads `\sources\boot.wim`; any other name fails with `0xc000000f`. `mkuki.sh` enforces it.
 - **The ISO is UDF:** its ISO9660 side holds only `README.TXT`, so `xorriso` can't extract from it. Loop-mount it like the other builders.
 - **CRLF:** scripts and config injected into WinPE need CRLF line endings.
@@ -174,18 +197,19 @@ Timings are from the verified QEMU run (KVM, 4 vCPU, 4 GiB).
 ## Files
 
 - `config/windows-installer.env`: pinned ISO (URL, size, SHA-256, UDF label), `boot.wim` hash, wimboot URL and hash
+- `build-windows-installer.sh`: Windows build (ISO + wimboot verify, WIM exports + checks, agent + stub builds, Windows UKI; `DEPLOY=1`, `TEST=1`)
+- `test-windows-installer.sh`: end-to-end test with asserted checks, `RESULT: PASS|FAIL` exit status, run archive
+- `boot-installed-windows.sh`: boot an archived installed disk, re-check SSH, `--reboot-test`, `--keep`
+- `config/unattend-test.xml`: test answer file (hostname, time zone, locale, OOBE, demo password; remove `UserAccounts` for SSH-only)
+- `windows/answerfile/`: `fdo-answerfile.exe` (Go, unit-tested): stages the answer file in WinPE, password vs SSH-only mode
+- `windows/view.py`: live / after-the-fact run viewer (screenshots, milestones, serial log, WinPE logs)
 - `windows/stage2/`: what goes into the Windows UKI and onto the installed system:
   - `winpeshl.ini`: runs `fdo-stage2.cmd` instead of the WinPE shell / Setup
   - `fdo-stage2.cmd`: Stage 2 (network, disk layout, SSH keys, endpoint, DISM, bcdboot, staging)
   - `fdo-endpoint.yaml`: endpoint config (payload destinations on `W:`)
   - `SetupComplete.cmd`: first-boot SSH setup and cleanup
-  - `unattend.xml`: test unattend (hostname, locale, OOBE, test password)
   - `unattend-test.xml`: Phase 2 delivery-only test payload
-- `windows/spike/`:
-  - `start17-winpe-uki.sh`: end-to-end test harness (DI, owner, TO0, QEMU, payloads, installed-system boot and SSH checks, run archive)
-  - `view.py`: live / after-the-fact run viewer (screenshots, milestones, serial log, WinPE logs)
-  - `boot-installed-windows.sh`: boot an archived installed disk, re-check SSH, `--reboot-test`, `--keep`
-  - `make-spike-disk.sh`, `run-spike-pe2.sh`, `fdo-spike.cmd`, `winpeshl.ini`: Phase 0/1 spikes (WinPE via wimboot from a FAT disk or a Windows UKI, TPM probe)
+- `windows/spike/`: Phase 0 spikes kept for reference: `make-spike-disk.sh`, `run-spike-pe2.sh`, `fdo-spike.cmd`, `winpeshl.ini` (WinPE via wimboot from a FAT disk, TPM probe)
 - `windows/tbs-probe/`: read-only TPM credential probe (go-fdo `tpm` package) for Linux and Windows
 - `doc/fdo-uki-windows-architecture.svg`: architecture diagram (Windows)
 - `TEST-WINDOWS.md`: discovery findings, all runs, hashes and timings

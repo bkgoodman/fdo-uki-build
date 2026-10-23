@@ -75,7 +75,7 @@ Done 2026-10-22, all positive. Details, hashes and timings:
       loaded image, bootmgr RAM disk). 4 GiB was enough for 488 MiB; find
       the floor, and check the K800's RAM.
 - [x] Deliver via BMO **URL** mode, SHA-256 pinned in signed image-begin
-      (`windows/spike/start17-winpe-uki.sh`)
+      (then `windows/spike/start17-winpe-uki.sh`, now `test-windows-installer.sh`)
 - [x] QEMU: Stage 1 TO2 → stub → wimboot → WinPE, probe over TBS matches
       (65 s; [TEST-WINDOWS.md](TEST-WINDOWS.md))
 - [x] Boot WinPE (index 1) rather than Setup (index 2):
@@ -117,9 +117,8 @@ Done 2026-10-22, all positive. Details, hashes and timings:
 - [ ] Report mode on Windows: Linux uses the `fdo-report` shell script; needs
       a `.cmd` equivalent (or call `fdo-endpoint.exe -report` directly) from
       the failure path and from `SetupComplete.cmd`
-- [ ] Stage 2 UKI is 502 MiB: 9 MiB headroom under the fdo-uefi-rs 512 MiB
-      URL cap. `fdo-endpoint-test.exe` (8.6 MiB) is test-only; drop it from
-      production builds
+- [x] Stage 2 UKI was 502 MiB (9 MiB headroom); the builder leaves out
+      `fdo-endpoint-test.exe` unless `ENDPOINT_TESTS=1`: 494 MiB, 18 MiB headroom
 
 ## Phase 3: Full flow (QEMU, KVM)
 
@@ -132,7 +131,7 @@ Done 2026-10-22 ([TEST-WINDOWS.md](TEST-WINDOWS.md) "Phase 3").
 - [x] Image: Server 2025 **Standard Core** (install.wim index 1) exported
       with wimlib, 3,157,707,632 B; owner payload order unattend → wim →
       authorized key
-- [x] Test `windows/stage2/unattend.xml` (specialize: ComputerName,
+- [x] Test answer file, now `config/unattend-test.xml` (specialize: ComputerName,
       TimeZone; oobeSystem: locale, OOBE hide pages, Administrator password)
 - [x] `SetupComplete.cmd`: FDO SSH host keys → `C:\ProgramData\ssh`
       (ACL SYSTEM + Administrators only), owner-delivered
@@ -146,17 +145,36 @@ Done 2026-10-22 ([TEST-WINDOWS.md](TEST-WINDOWS.md) "Phase 3").
 - [x] Later boots: cold boot and in-OS reboot both come back with sshd
       (auto-start) and the same FDO host keys; with the FDO client disk still
       attached the firmware boots Windows Boot Manager (bcdboot made it
-      first). `windows/spike/boot-installed-windows.sh`
+      first). `boot-installed-windows.sh`
 - [ ] Re-provisioning policy: what makes a deployed machine run Stage 1
       again (boot-order change, owner action, wipe)? Today nothing does,
       which is right for "installed", but needs a deliberate story
 - [ ] Failure path ends in a report (report mode, Phase 4)
 - [ ] Desktop Experience (index 2) and Datacenter: same flow, larger image
-- [ ] Production unattend: no plaintext password (or none at all: key-only
-      admin access), per-device values from the owner
-- [ ] Rename/move the harness out of `windows/spike/` into
-      `test-windows-installer.sh` (like the Linux targets) and a
-      `build-windows-installer.sh` that does ISO → WIM export → UKI
+- [x] Two password modes (2026-10-23): demo answer file keeps its plaintext
+      password (advised against); without `AdministratorPassword` the
+      device goes SSH-only (`windows/answerfile/fdo-answerfile.exe` adds a
+      random password for setup, SetupComplete makes sshd key-only).
+      Tested both ways (`ANSWER_MODE=password|ssh-only`)
+- [ ] Owner-generated per-device password option (kept in the owner's
+      records) as a middle ground between demo and SSH-only
+- [ ] Per-device answer files from a template on the owner side
+      (ComputerName etc. from the owner's inventory / device GUID), like
+      autoinstall/kickstart per device on Linux
+- [ ] Answer-file options worth exercising: product key, domain join,
+      RDP / WinRM, `RunSynchronous` / `FirstLogonCommands` (README-WINDOWS.md
+      "The answer file")
+- [x] **Scripted (2026-10-23):** `build-windows-installer.sh` (ISO +
+      wimboot verify, cached WIM exports, image content checks, agent +
+      stub builds, reproducible UKI, answer-file check; `DEPLOY=1`,
+      `TEST=1`) and `test-windows-installer.sh` (~24 asserted checks,
+      `RESULT: PASS|FAIL` exit status, run archive, free-port selection);
+      `boot-installed-windows.sh` at the repo root
+- [x] Negative-test the harness itself: `BAD_UKI_HASH=1` (owner signs a
+      wrong UKI hash): device refuses to chainload, run FAILs with exit 1
+- [ ] More negative legs: wrong install-image hash (Payload FSIM must
+      reject), answer file with a different ComputerName than expected
+- [ ] shellcheck the Windows scripts (not installed on the build or test host)
 
 ## Phase 4: Hardening / Production
 

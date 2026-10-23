@@ -16,7 +16,7 @@ Each target has its own guide, with a detailed architecture diagram, build steps
 | **Fedora 44** Server DVD | Anaconda | kickstart | 277 MiB / 3.6 GiB | 2026-09-30 | [README-FEDORA.md](README-FEDORA.md) |
 | **openSUSE Leap 16.0** offline | Agama (live ISO) | Agama JSON profile | 125 MiB / 4.2 GiB | 2026-10-05 | [README-OPENSUSE.md](README-OPENSUSE.md) |
 | **ROS 2 Lyrical** on Ubuntu 26.04.1 | Subiquity + offline ROS 2 apt bundle | autoinstall YAML | 106 MiB / 2.7 GiB + 132 MiB bundle | 2026-10-07 | [README-ROS2.md](README-ROS2.md) |
-| **Windows Server 2025** Standard Core (eval) | WinPE + DISM, then Windows first-boot setup | `unattend.xml` | 502 MiB "Windows UKI" / 3.16 GB `install.wim` | 2026-10-22 | [README-WINDOWS.md](README-WINDOWS.md) |
+| **Windows Server 2025** Standard Core (eval) | WinPE + DISM, then Windows first-boot setup | `unattend.xml` | 494 MiB "Windows UKI" / 3.16 GB `install.wim` | 2026-10-22 | [README-WINDOWS.md](README-WINDOWS.md) |
 
 Every Linux target has a `TEST-<OS>-UKI.md` (findings, hashes, timings) and a `TODO-<OS>-UKI.md` (phased work tracker); Windows has [TEST-WINDOWS.md](TEST-WINDOWS.md) and [TODO-WINDOWS.md](TODO-WINDOWS.md). Work that applies to all targets is in [TODO.md](TODO.md).
 
@@ -99,16 +99,16 @@ DEPLOY=1 DEPLOY_HOST=<test-host> ./build-<os>-installer-uki.sh
 ./boot-installed-vm.sh <test-workdir>/target.qcow2
 ```
 
-`<os>` is `ubuntu`, `fedora`, `opensuse` or `ros2`. The Ubuntu path's older harness is `test-installer-pe2.sh`. Windows is not scripted into this pattern yet: its build steps are in [README-WINDOWS.md](README-WINDOWS.md#building-and-testing), and its harness is `windows/spike/start17-winpe-uki.sh` (installed disk: `windows/spike/boot-installed-windows.sh`). The test host needs `swtpm`, `qemu-system-x86_64`, OVMF, the FDO server (`go-fdo` `examples/cmd`), `quick-di-tpm` (`go-fdo-quick-di`), and the UEFI client disk `efi-disk-release.img` (`fdo-uefi-rs`). Paths are set with environment variables; see each script's header.
+`<os>` is `ubuntu`, `fedora`, `opensuse` or `ros2`. The Ubuntu path's older harness is `test-installer-pe2.sh`. Windows uses `build-windows-installer.sh` / `test-windows-installer.sh` (and `boot-installed-windows.sh`); `DEPLOY=1 TEST=1` runs build, deploy, test and result fetch in one command, and the test exits non-zero on any failed check ([README-WINDOWS.md](README-WINDOWS.md#building-and-testing)). The test host needs `swtpm`, `qemu-system-x86_64`, OVMF, the FDO server (`go-fdo` `examples/cmd`), `quick-di-tpm` (`go-fdo-quick-di`), and the UEFI client disk `efi-disk-release.img` (`fdo-uefi-rs`). Paths are set with environment variables; see each script's header.
 
 **All development and building happens on the build host.** This is the source-of-truth for code, tools, and git repos. After building, we copy required components to deployment targets (QEMU test hosts, edge devices, etc.).
 
 ## Repository Layout
 
 - `build-<os>-installer-uki.sh`, `test-<os>-installer.sh`: builder and end-to-end test harness per target
-- `config/`: pinned ISO URLs/hashes (`*-installer.env`) and test configs (autoinstall, kickstart, Agama profile)
+- `config/`: pinned ISO URLs/hashes (`*-installer.env`) and test configs (autoinstall, kickstart, Agama profile, Windows answer file)
 - `rootfs-*/`: the files each builder adds to the vendor initramfs
-- `windows/`: the Windows target: `stage2/` (WinPE Stage 2 script, endpoint config, `SetupComplete.cmd`, test unattend), `spike/` (end-to-end harness, run viewer, installed-disk boot, Phase 0/1 spikes), `tbs-probe/` (TPM credential probe)
+- `windows/`: the Windows target: `stage2/` (WinPE Stage 2 script, endpoint config, `SetupComplete.cmd`), `view.py` (test run viewer), `spike/` (Phase 0 spikes), `tbs-probe/` (TPM credential probe)
 - `README-<OS>.md`, `TEST-<OS>-UKI.md`, `TODO-<OS>-UKI.md`: per-target guide, results and work tracker (Windows: `README-WINDOWS.md`, `TEST-WINDOWS.md`, `TODO-WINDOWS.md`)
 - `TODO.md`: cross-cutting work tracker (all targets)
 - `doc/`: diagrams (one `fdo-uki-<os>-architecture.svg` per target, including `fdo-uki-windows-architecture.svg`), plus the cross-cutting deep dives:

@@ -31,6 +31,23 @@ del /f /q C:\fdo\ssh-host-keys\ssh_host_ed25519_key C:\fdo\ssh-host-keys\ssh_hos
 del /f /q C:\fdo\unattend.xml C:\Windows\Panther\unattend.xml >> "%LOG%" 2>&1
 echo cleanup: private key copies and unattend removed >> "%LOG%"
 
+rem SSH-only install (the answer file had no AdministratorPassword): the
+rem account got a random password nobody knows; make sshd key-only too.
+rem Options before the default config: sshd uses the first value it reads
+rem (the default file ends in a Match block, so appending would not work).
+if exist C:\fdo\ssh-only (
+    echo mode: ssh-only ^(no answer-file password; sshd key-only^) >> "%LOG%"
+    > "%SSHD%\sshd_config" (
+        echo # FDO: SSH-only install - key authentication only
+        echo PasswordAuthentication no
+        echo KbdInteractiveAuthentication no
+        echo.
+    )
+    type C:\Windows\System32\OpenSSH\sshd_config_default >> "%SSHD%\sshd_config"
+) else (
+    echo mode: password ^(answer-file Administrator password; demo only^) >> "%LOG%"
+)
+
 sc config sshd start= auto >> "%LOG%" 2>&1
 net start sshd >> "%LOG%" 2>&1
 netsh advfirewall firewall add rule name="FDO OpenSSH Server" dir=in action=allow protocol=TCP localport=22 >> "%LOG%" 2>&1

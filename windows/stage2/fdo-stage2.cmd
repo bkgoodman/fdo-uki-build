@@ -94,7 +94,13 @@ echo bcdboot-exit=%ERRORLEVEL% >> "%LOG%"
 
 echo --- unattend, SetupComplete, SSH host keys, agent >> "%LOG%"
 mkdir W:\Windows\Panther 2>nul
-copy /y W:\fdo\unattend.xml W:\Windows\Panther\unattend.xml >> "%LOG%" 2>&1
+rem Answer file -> Panther. Without an AdministratorPassword, fdo-answerfile
+rem adds a random one (setup would stop and ask otherwise) and creates the
+rem ssh-only marker; SetupComplete.cmd then makes sshd key-only.
+%SYS%\fdo-answerfile.exe -in W:\fdo\unattend.xml -out W:\Windows\Panther\unattend.xml -ssh-only-marker W:\fdo\ssh-only >> "%LOG%" 2>&1
+set AE=%ERRORLEVEL%
+echo answerfile-exit=%AE% >> "%LOG%"
+if not "%AE%"=="0" goto :done
 mkdir W:\Windows\Setup\Scripts 2>nul
 copy /y %SYS%\SetupComplete.cmd W:\Windows\Setup\Scripts\SetupComplete.cmd >> "%LOG%" 2>&1
 xcopy /y /i "%RUN%\ssh-host-keys" W:\fdo\ssh-host-keys >> "%LOG%" 2>&1

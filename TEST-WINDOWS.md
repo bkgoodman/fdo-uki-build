@@ -2,6 +2,50 @@
 
 Work tracker: [TODO-WINDOWS.md](TODO-WINDOWS.md)
 
+> Runs before 2026-10-23 used the spike harness `windows/spike/start17-winpe-uki.sh`
+> and hand-built UKIs; both are replaced by `build-windows-installer.sh` and
+> `test-windows-installer.sh` (same flow, asserted checks).
+
+## Administrator password: demo vs SSH-only (2026-10-23)
+
+**Result: PASS in both modes (28/28 checks each).** UKI 519,982,592 B (now
+with `fdo-answerfile.exe`, 2.2 MiB; 16 MiB under the URL cap).
+
+| Run | Answer file | Device | Evidence |
+| --- | --- | --- | --- |
+| `20261023-100224` (`DEPLOY=1 TEST=1`) | `config/unattend-test.xml` with its demo password | `mode=password`; SetupComplete `mode: password` | sshd offers `publickey,password,keyboard-interactive`; a real password login (SSH_ASKPASS, strict host key) with the answer-file password returns `fdo-win-test` |
+| `20261023-100731-ssh-only` (`ANSWER_MODE=ssh-only`) | the same file with `UserAccounts` removed | `fdo-answerfile`: `mode=ssh-only` (random password added for setup); SetupComplete `mode: ssh-only` | sshd offers `publickey` only; the demo password is refused: `Permission denied (publickey).`; key login still works |
+
+Setup did not stop in SSH-only mode: the random password got it through
+first boot (device VM 231 s, installed boot to SSH 51 s). Unit tests for the
+helper: `windows/answerfile` (9 tests, run by the builder before it builds).
+
+## Scripted build + test (2026-10-23)
+
+**Result: PASS (24/24 checks, exit 0).** One command on the build host:
+
+```bash
+GO_ROOT=$HOME/go DEPLOY=1 TEST=1 DEPLOY_HOST=<test host> ./build-windows-installer.sh
+```
+
+- Build: ISO + wimboot verified; WinPE and `SERVERSTANDARDCORE` exported
+  (cached afterwards); content checks (TPM stack, diskpart/DISM/bcdboot,
+  boot files, OpenSSH Server) passed; UKI 517,726,208 B (494 MiB, 18 MiB
+  under the URL cap; no test binary).
+- Deploy: payloads by `rsync --checksum` (first run sends the 3 GB image).
+- Test (`~/fdo-windows-runs/20261023-093306`): device VM (Stage 1 + 2)
+  233 s, installed boot to SSH 50 s, total 299 s. It chose SSH port 2223 on
+  its own because a VM the user was using held 2222.
+- Archive fetched to `build-windows/runs/20261023-093306/`.
+- Second run (`20261023-094000`) after making `mkuki.sh` reproducible: both
+  exports cached, image not re-sent, PASS (device VM 230 s).
+- **Negative run** (`20261023-094522-neg-bad-hash`, `BAD_UKI_HASH=1
+  TIMEOUT_QEMU=300`): the owner signed a wrong SHA-256 for the UKI. Device:
+  `BMO: SHA256 MISMATCH! Downloaded image is CORRUPTED.` / `REFUSING to
+  chainload`. Harness: `RESULT: FAIL`, exit 1; 13 checks FAIL (from "BMO
+  image integrity verified" on), while "Stage 1: TO2 complete" still PASSes,
+  as it should.
+
 ## Phase 3: zero-touch install of Windows Server 2025 Core, SSH without TOFU (2026-10-22)
 
 **Result: PASS** (runs `phase3` and `phase3b`; the second adds the
