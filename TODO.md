@@ -22,6 +22,25 @@ Windows). Per-target work stays in `TODO-<OS>-UKI.md` / `TODO-WINDOWS.md`.
       (DB) on tmpfs; on a spinning disk a chunk round costs ~0.5 s
       (`../go-fdo/TODO.md` "Performance").
 
+## Test harnesses on the QEMU host (found 2026-10-27, step 5 run)
+
+- [ ] **pe2 `/tmp` is a tmpfs with per-user quota (`usrquota`).** Old run
+      directories (`/tmp/fdo-installer-test-*` ~6.5 GB each, Windows WORKDIRs
+      ~9.6 GB) pile up; when the quota filled mid-install, `tee qemu.log`
+      and the target qcow2 (owned by the user) hit EDQUOT and the run was
+      void. Harnesses should check free quota up front (~10 GB) and/or delete
+      their WORKDIR on success unless `KEEP=1`.
+- [ ] `test-installer-pe2.sh` leaves its `server-installer` running on :8080
+      after QEMU exits; the Windows harness (fixed `FDO_PORT=8080`) then can't
+      start. Stop it by PID on exit. Both harnesses hard-code 8080, so they
+      can't run concurrently.
+- [ ] `test-installer-pe2.sh` defaults `SSH_HOST_FWD=2222`, which the Windows
+      phase-3b VM holds on pe2; pick the first free port like
+      `test-windows-installer.sh`. Also no fallback for `EFI_DISK`
+      (`~/efi-disk-release.img`), unlike the Windows harness.
+- [ ] Build scripts take Go from `PATH`; on devvm that is 1.18 and fails on
+      go-fdo-endpoint's `go 1.25.0`. Use `GO_ROOT=/home/bradgoodman/go`.
+
 ## v2: Install Back Channel ("Report Mode")
 
 **Status:** Ubuntu PoC implemented 2026-10-14 (standalone logs per
